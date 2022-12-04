@@ -1,5 +1,5 @@
 /*
- * @(#) JSON.kt
+ * @(#) JSONLoaderTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
