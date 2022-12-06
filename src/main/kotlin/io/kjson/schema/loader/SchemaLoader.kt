@@ -36,7 +36,6 @@ import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
-import io.kjson.pointer.forEachKey
 import io.kjson.pointer.get
 import io.kjson.resource.Loader
 import io.kjson.resource.ResourceLoader
@@ -75,14 +74,18 @@ class SchemaLoader private constructor(
                 schemaDocument.state == SchemaDocument.State.PROCESSED)
             return schemaDocument
         schemaDocument.state = SchemaDocument.State.PRESCANNED
-        schemaDocument.json.let {
-            if (it is JSONBoolean)
+        schemaDocument.json.let { json ->
+            if (json is JSONBoolean)
                 return schemaDocument
-            if (it !is JSONObject)
+            if (json !is JSONObject)
                 log.fatal("Schema must be boolean or object - $resourceURL")
-            val idMapping = IdMapping(it)
-            idMappings[resourceURL.toURI()] = idMapping
-            scanForId(schemaDocument.schemaDialect, resourceURL.toURI(), JSONRef(it), idMapping, idMappings)
+            PreLoadContext(
+                schemaDialect = schemaDocument.schemaDialect,
+                baseURI = resourceURL.toURI(),
+                ref = JSONRef(json),
+                idMapping = IdMapping(json).also { idMappings[resourceURL.toURI()] = it },
+                idMappings = idMappings,
+            ).scan()
         }
         return schemaDocument
     }
@@ -132,51 +135,39 @@ class SchemaLoader private constructor(
         val ref: JSONRef<*>,
         val idMapping: IdMapping,
         val idMappings: MutableMap<URI, IdMapping>,
-    ) // TODO pass this as parameter instead of long parameter list (?)
+    ) {
 
-    companion object {
-
-        val log = getLogger()
-
-        fun scanForId(
-            schemaDialect: SchemaDialect,
-            baseURI: URI,
-            ref: JSONRef<*>,
-            idMapping: IdMapping,
-            idMappings: MutableMap<URI, IdMapping>,
-        ) {
+        fun scan() {
             val json = ref.asRef<JSONObject>().node
             when (val idProperty = json["\$id"]) {
                 null -> {
                     for (property in json.keys) {
                         val handler = schemaDialect.findKeywordHandler(property)
-                        handler.preScan(schemaDialect, baseURI, ref.child(property), idMapping, idMappings)
+                        handler.preScan(copy(
+                            ref = ref.child<JSONValue>(property)
+                        ))
                     }
                 }
                 is JSONString -> {
                     val idURI = baseURI.resolve(idProperty.value).checkIdURI("\$id")
-                    val newIdMapping = IdMapping(json)
-                    idMappings[idURI] = newIdMapping
                     for (property in json.keys) {
                         val handler = schemaDialect.findKeywordHandler(property)
-                        handler.preScan(schemaDialect, idURI, JSONRef(json).child(property), newIdMapping, idMappings)
+                        handler.preScan(copy(
+                            baseURI = idURI,
+                            ref = JSONRef(json).child<JSONValue>(property),
+                            idMapping = IdMapping(json).also { idMappings[idURI] = it },
+                        ))
                     }
                 }
                 else -> log.fatal("\$id must be string")
             }
         }
 
-        fun scanCompoundForId(
-            schemaDialect: SchemaDialect,
-            baseURI: URI,
-            ref: JSONRef<JSONObject>,
-            idMapping: IdMapping,
-            idMappings: MutableMap<URI, IdMapping>,
-        ) {
-            ref.forEachKey<JSONValue> {
-                scanForId(schemaDialect, baseURI, this, idMapping, idMappings)
-            }
-        }
+    }
+
+    companion object {
+
+        val log = getLogger()
 
         private fun URI.checkIdURI(type: String): URI = when {
             scheme == null -> log.fatal("$type URI must be absolute")

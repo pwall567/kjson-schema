@@ -25,15 +25,12 @@
 
 package io.kjson.schema.handlers
 
-import java.net.URI
-
 import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.JSONSchemaException.Companion.fatal
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaDialect
 import io.kjson.schema.loader.SchemaLoader
 import net.pwall.log.getLogger
 
@@ -45,17 +42,11 @@ object AnchorHandler : KeywordHandler {
 
     override fun process(ref: JSONRef<JSONValue>): JSONSchema.Element? = null // do nothing
 
-    override fun preScan(
-        schemaDialect: SchemaDialect,
-        baseURI: URI,
-        ref: JSONRef<JSONValue>,
-        idMapping: SchemaLoader.IdMapping,
-        idMappings: MutableMap<URI, SchemaLoader.IdMapping>,
-    ) {
-        val anchor = ref.asRef<JSONString>().node.value
+    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
+        val anchor = preLoadContext.ref.asRef<JSONString>().node.value
         if (!anchorRegex.containsMatchIn(anchor))
-            log.fatal("Illegal anchor $anchor")
-        idMapping.addAnchor(anchor, ref.pointer.parent())
+            log.fatal("Illegal anchor $anchor") // TODO provide more information - URI? pointer?
+        preLoadContext.idMapping.addAnchor(anchor, preLoadContext.ref.pointer.parent())
     }
 
 }

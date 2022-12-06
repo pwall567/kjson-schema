@@ -25,13 +25,12 @@
 
 package io.kjson.schema.handlers
 
-import java.net.URI
-
+import io.kjson.JSONObject
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONRef
+import io.kjson.pointer.forEachKey
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaDialect
 import io.kjson.schema.loader.SchemaLoader
 
 object PropertiesHandler : KeywordHandler {
@@ -40,20 +39,10 @@ object PropertiesHandler : KeywordHandler {
         TODO("Not yet implemented")
     }
 
-    override fun preScan(
-        schemaDialect: SchemaDialect,
-        baseURI: URI,
-        ref: JSONRef<JSONValue>,
-        idMapping: SchemaLoader.IdMapping,
-        idMappings: MutableMap<URI, SchemaLoader.IdMapping>,
-    ) {
-        SchemaLoader.scanCompoundForId(
-            schemaDialect = schemaDialect,
-            baseURI = baseURI,
-            ref = ref.asRef(),
-            idMapping = idMapping,
-            idMappings = idMappings,
-        )
+    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
+        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
+            preLoadContext.copy(ref = this).scan()
+        }
     }
 
 }

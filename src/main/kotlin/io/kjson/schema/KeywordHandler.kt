@@ -25,8 +25,6 @@
 
 package io.kjson.schema
 
-import java.net.URI
-
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONRef
 import io.kjson.schema.loader.SchemaLoader
@@ -35,13 +33,7 @@ interface KeywordHandler {
 
     fun process(ref: JSONRef<JSONValue>): JSONSchema.Element?
 
-    fun preScan(
-        schemaDialect: SchemaDialect,
-        baseURI: URI,
-        ref: JSONRef<JSONValue>,
-        idMapping: SchemaLoader.IdMapping,
-        idMappings: MutableMap<URI, SchemaLoader.IdMapping>,
-    ) {
+    fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
         // default - do nothing
     }
 
