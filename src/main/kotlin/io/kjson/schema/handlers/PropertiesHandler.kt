@@ -31,11 +31,12 @@ import io.kjson.pointer.JSONRef
 import io.kjson.pointer.forEachKey
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
+import io.kjson.schema.SchemaLocation
 import io.kjson.schema.loader.SchemaLoader
 
 object PropertiesHandler : KeywordHandler {
 
-    override fun process(ref: JSONRef<JSONValue>): JSONSchema.Element? {
+    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? {
         TODO("Not yet implemented")
     }
 

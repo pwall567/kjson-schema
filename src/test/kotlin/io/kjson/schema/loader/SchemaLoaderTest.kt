@@ -26,20 +26,36 @@
 package io.kjson.schema.loader
 
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 import kotlin.test.expect
 import kotlin.test.fail
 
 import java.net.URI
 
+import io.kjson.JSONInt
+import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer
+import io.kjson.pointer.JSONRef
 import io.kjson.resource.ResourceLoader
+import io.kjson.schema.JSONSchema
 
 class SchemaLoaderTest {
+
+    @Test fun `should load trivial schema`() {
+        val loader = SchemaLoader(ResourceLoader.classPathURL("/schema/") ?: fail("Can't locate /schema"))
+        val schemaDocument = loader.load("dummy-schema.schema.json")
+        assertIs<JSONSchema.ObjectSchema>(schemaDocument.schema)
+        assertTrue { schemaDocument.schema.validate(JSONRef(JSONInt(123))) }
+        assertFalse { schemaDocument.schema.validate(JSONRef(JSONString("abc"))) }
+    }
 
     @Test fun `should pre-scan example from JSON Schema documentation`() {
         val sl = SchemaLoader(ResourceLoader.classPathURL("/schema/") ?: fail("Can't locate /schema"))
         val sd = sl.preLoad("id-example")
+        expect(SchemaDocument.State.PRESCANNED) { sd.state }
         sl.idMappings.keys.forEach {
             println(it)
         }

@@ -1,5 +1,5 @@
 /*
- * @(#) draft202012/Applicator.kt
+ * @(#) draft201909/Applicator.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema.vocabulary.draft202012
+package io.kjson.schema.vocabulary.draft201909
 
 import java.net.URI
 
@@ -34,13 +34,15 @@ import io.kjson.schema.handlers.PropertiesHandler
 
 object Applicator : Vocabulary {
 
-    override val id = URI("https://json-schema.org/draft/2020-12/vocab/applicator")
+    override val id = URI("https://json-schema.org/draft/2019-09/vocab/applicator")
 
     override fun findHandler(keyword: String): KeywordHandler? = when (keyword) {
-        "prefixItems" -> NullKeywordHandler // TODO pre-scan should examine schemata
+        "additionalItems" -> NullKeywordHandler // TODO pre-scan should examine schemata
+        "unevaluatedItems" -> NullKeywordHandler // TODO pre-scan should examine schemata
         "items" -> NullKeywordHandler // TODO pre-scan should examine schema
         "contains" -> NullKeywordHandler // TODO pre-scan should examine schema???
         "additionalProperties" -> NullKeywordHandler // TODO pre-scan should examine schema
+        "unevaluatedProperties" -> NullKeywordHandler // TODO pre-scan should examine schema
         "properties" -> PropertiesHandler
         "patternProperties" -> NullKeywordHandler // TODO pre-scan should examine schemata
         "dependentSchemas" -> NullKeywordHandler // TODO pre-scan should examine schema???

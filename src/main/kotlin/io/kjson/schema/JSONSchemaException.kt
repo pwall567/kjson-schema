@@ -28,7 +28,7 @@ package io.kjson.schema
 import io.kjson.JSONException
 import net.pwall.log.Logger
 
-class JSONSchemaException(val text: String) : JSONException(text) {
+open class JSONSchemaException(val text: String) : JSONException(text) {
 
     companion object {
 

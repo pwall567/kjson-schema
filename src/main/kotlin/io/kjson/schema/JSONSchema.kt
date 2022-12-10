@@ -27,19 +27,28 @@ package io.kjson.schema
 
 import java.net.URI
 
-import io.kjson.JSONValue
 import io.kjson.pointer.JSONRef
 
 sealed class JSONSchema(val location: SchemaLocation) {
 
-    abstract fun validate(instance: JSONRef<JSONValue>): Boolean
+    enum class Type(val value: String) {
+        NULL("null"),
+        BOOLEAN("boolean"),
+        OBJECT("object"),
+        ARRAY("array"),
+        STRING("string"),
+        NUMBER("number"),
+        INTEGER("integer"),
+    }
+
+    abstract fun validate(instance: JSONRef<*>): Boolean
 
     class TrueSchema(location: SchemaLocation) : JSONSchema(location) {
-        override fun validate(instance: JSONRef<JSONValue>): Boolean = true
+        override fun validate(instance: JSONRef<*>): Boolean = true
     }
 
     class FalseSchema(location: SchemaLocation) : JSONSchema(location) {
-        override fun validate(instance: JSONRef<JSONValue>): Boolean = false
+        override fun validate(instance: JSONRef<*>): Boolean = false
     }
 
     abstract class Element(location: SchemaLocation) : JSONSchema(location) {
@@ -52,12 +61,15 @@ sealed class JSONSchema(val location: SchemaLocation) {
         private val elements: List<Element>,
     ) : JSONSchema(location) {
 
-        override fun validate(instance: JSONRef<JSONValue>): Boolean = elements.all { it.validate(instance) }
+        override fun validate(instance: JSONRef<*>): Boolean = elements.all { it.validate(instance) }
 
     }
 
     companion object {
-        fun booleanSchema(b: Boolean, location: SchemaLocation) = if (b) TrueSchema(location) else FalseSchema(location)
+
+        fun booleanSchema(booleanValue: Boolean, location: SchemaLocation) =
+                if (booleanValue) TrueSchema(location) else FalseSchema(location)
+
     }
 
 }

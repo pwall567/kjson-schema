@@ -31,7 +31,7 @@ import io.kjson.schema.loader.SchemaLoader
 
 interface KeywordHandler {
 
-    fun process(ref: JSONRef<JSONValue>): JSONSchema.Element?
+    fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element?
 
     fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
         // default - do nothing

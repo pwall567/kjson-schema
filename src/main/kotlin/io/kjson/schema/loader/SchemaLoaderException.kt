@@ -1,5 +1,5 @@
 /*
- * @(#) AnchorHandler.kt
+ * @(#) SchemaLoaderException.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,31 +23,15 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema.handlers
+package io.kjson.schema.loader
 
-import io.kjson.JSONString
-import io.kjson.JSONValue
-import io.kjson.pointer.JSONRef
-import io.kjson.schema.JSONSchema
-import io.kjson.schema.JSONSchemaException.Companion.fatal
-import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaLocation
-import io.kjson.schema.loader.SchemaLoader
-import net.pwall.log.getLogger
+import java.net.URI
+import io.kjson.pointer.JSONPointer
+import io.kjson.schema.JSONSchemaException
 
-object AnchorHandler : KeywordHandler {
-
-    private val log = getLogger()
-
-    private val anchorRegex = Regex("^[A-Za-z_][-A-Za-z0-9._]*\$") // pattern from 2020-12 meta schema
-
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? = null // do nothing
-
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        val anchor = preLoadContext.ref.asRef<JSONString>().node.value
-        if (!anchorRegex.containsMatchIn(anchor))
-            log.fatal("Illegal anchor $anchor") // TODO provide more information - URI? pointer?
-        preLoadContext.idMapping.addAnchor(anchor, preLoadContext.ref.pointer.parent())
-    }
-
+class SchemaLoaderException(
+    text: String,
+    val pointer: JSONPointer,
+    val uri: URI, // nullable?
+) : JSONSchemaException("$text at $pointer in $uri") { // TODO improve on this
 }

@@ -31,8 +31,11 @@ import java.net.URL
 import io.kjson.JSON.asStringOrNull
 import io.kjson.JSONObject
 import io.kjson.JSONValue
+import io.kjson.pointer.JSONPointer
+import io.kjson.schema.JSONSchema
 import io.kjson.schema.JSONSchemaException.Companion.fatal
 import io.kjson.schema.SchemaDialect
+import io.kjson.schema.SchemaLocation
 import io.kjson.util.Util.withFragment
 import net.pwall.log.getLogger
 
@@ -51,6 +54,8 @@ class SchemaDocument(
 
     val schemaDialect: SchemaDialect =
             if (json is JSONObject) SchemaDialect.findDialect(json) else SchemaDialect.latest()
+
+    var schema: JSONSchema = JSONSchema.TrueSchema(SchemaLocation(baseURI, JSONPointer.root))
 
     companion object {
 

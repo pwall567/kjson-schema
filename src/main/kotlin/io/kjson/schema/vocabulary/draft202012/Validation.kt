@@ -1,5 +1,5 @@
 /*
- * @(#) draft202012/Core.kt
+ * @(#) draft202012/Validation.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -26,28 +26,36 @@
 package io.kjson.schema.vocabulary.draft202012
 
 import java.net.URI
-
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.Vocabulary
-import io.kjson.schema.handlers.AnchorHandler
-import io.kjson.schema.handlers.CommentHandler
-import io.kjson.schema.handlers.DefsHandler
-import io.kjson.schema.handlers.NullKeywordHandler
+import io.kjson.schema.handlers.TypeHandler
+import io.kjson.schema.handlers.UnimplementedKeywordHandler
 
-object Core : Vocabulary {
+object Validation : Vocabulary {
 
-    override val id = URI("https://json-schema.org/draft/2020-12/vocab/core")
+    override val id = URI("https://json-schema.org/draft/2020-12/vocab/validation")
 
     override fun findHandler(keyword: String): KeywordHandler? = when (keyword) {
-        "\$id" -> NullKeywordHandler
-        "\$schema" -> NullKeywordHandler
-        "\$ref" -> NullKeywordHandler
-        "\$anchor" -> AnchorHandler
-        "\$dynamicRef" -> NullKeywordHandler
-        "\$dynamicAnchor" -> NullKeywordHandler
-        "\$vocabulary" -> NullKeywordHandler
-        "\$comment" -> CommentHandler
-        "\$defs" -> DefsHandler
+        "type" -> TypeHandler
+        "const" -> UnimplementedKeywordHandler // TODO
+        "enum" -> UnimplementedKeywordHandler // TODO
+        "multipleOf" -> UnimplementedKeywordHandler // TODO
+        "maximum" -> UnimplementedKeywordHandler // TODO
+        "exclusiveMaximum" -> UnimplementedKeywordHandler // TODO
+        "minimum" -> UnimplementedKeywordHandler // TODO
+        "exclusiveMinimum" -> UnimplementedKeywordHandler // TODO
+        "maxLength" -> UnimplementedKeywordHandler // TODO
+        "minLength" -> UnimplementedKeywordHandler // TODO
+        "pattern" -> UnimplementedKeywordHandler // TODO
+        "maxItems" -> UnimplementedKeywordHandler // TODO
+        "minItems" -> UnimplementedKeywordHandler // TODO
+        "uniqueItems" -> UnimplementedKeywordHandler // TODO
+        "maxContains" -> UnimplementedKeywordHandler // TODO
+        "minContains" -> UnimplementedKeywordHandler // TODO
+        "maxProperties" -> UnimplementedKeywordHandler // TODO
+        "minProperties" -> UnimplementedKeywordHandler // TODO
+        "required" -> UnimplementedKeywordHandler // TODO
+        "dependentRequired" -> UnimplementedKeywordHandler // TODO
         else -> null
     }
 

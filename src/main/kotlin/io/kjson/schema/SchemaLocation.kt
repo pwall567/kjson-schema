@@ -29,7 +29,7 @@ import java.net.URI
 
 import io.kjson.pointer.JSONPointer
 
-class SchemaLocation(
+data class SchemaLocation(
     val uri: URI?, // TODO consider - should this be nullable?
     val pointer: JSONPointer = JSONPointer.root,
 ) {

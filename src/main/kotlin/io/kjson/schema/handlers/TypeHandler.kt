@@ -1,5 +1,5 @@
 /*
- * @(#) AnchorHandler.kt
+ * @(#) TypeHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -25,29 +25,40 @@
 
 package io.kjson.schema.handlers
 
+import io.kjson.JSONArray
 import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONRef
+import io.kjson.pointer.child
 import io.kjson.schema.JSONSchema
-import io.kjson.schema.JSONSchemaException.Companion.fatal
+import io.kjson.schema.JSONSchemaException
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.SchemaLocation
-import io.kjson.schema.loader.SchemaLoader
-import net.pwall.log.getLogger
+import io.kjson.schema.validator.TypeValidator
 
-object AnchorHandler : KeywordHandler {
+object TypeHandler : KeywordHandler {
 
-    private val log = getLogger()
+    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element {
+        val types: List<JSONSchema.Type> = when {
+            ref.isRef<JSONString>() -> listOf(checkType(ref))
+            ref.isRef<JSONArray>() -> {
+                val arrayRef = ref.asRef<JSONArray>()
+                List(arrayRef.node.size) { i -> checkType(arrayRef.child<JSONValue>(i)) }
+            }
+            else -> throw JSONSchemaException("Invalid type - $ref")
+        }
+        return TypeValidator(schemaLocation, types)
+    }
 
-    private val anchorRegex = Regex("^[A-Za-z_][-A-Za-z0-9._]*\$") // pattern from 2020-12 meta schema
-
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? = null // do nothing
-
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        val anchor = preLoadContext.ref.asRef<JSONString>().node.value
-        if (!anchorRegex.containsMatchIn(anchor))
-            log.fatal("Illegal anchor $anchor") // TODO provide more information - URI? pointer?
-        preLoadContext.idMapping.addAnchor(anchor, preLoadContext.ref.pointer.parent())
+    private fun checkType(item: JSONRef<*>): JSONSchema.Type {
+        if (item.isRef<JSONString>()) {
+            val value = item.asRef<JSONString>().node.value
+            for (type in JSONSchema.Type.values()) {
+                if (value == type.value)
+                    return type
+            }
+        }
+        throw JSONSchemaException("Invalid type $item")
     }
 
 }

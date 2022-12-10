@@ -36,11 +36,15 @@ import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
+import io.kjson.pointer.child
+import io.kjson.pointer.forEachKey
 import io.kjson.pointer.get
 import io.kjson.resource.Loader
 import io.kjson.resource.ResourceLoader
+import io.kjson.schema.JSONSchema
 import io.kjson.schema.JSONSchemaException.Companion.fatal
 import io.kjson.schema.SchemaDialect
+import io.kjson.schema.SchemaLocation
 import io.kjson.util.JSONLoader
 import io.kjson.util.Util.withFragment
 import net.pwall.log.getLogger
@@ -73,10 +77,15 @@ class SchemaLoader private constructor(
         if (schemaDocument.state == SchemaDocument.State.PRESCANNED ||
                 schemaDocument.state == SchemaDocument.State.PROCESSED)
             return schemaDocument
-        schemaDocument.state = SchemaDocument.State.PRESCANNED
         schemaDocument.json.let { json ->
-            if (json is JSONBoolean)
+            if (json is JSONBoolean) {
+                schemaDocument.schema = JSONSchema.booleanSchema(
+                    booleanValue = json.value,
+                    location = SchemaLocation(schemaDocument.baseURI, JSONPointer.root),
+                )
+                schemaDocument.state = SchemaDocument.State.PROCESSED
                 return schemaDocument
+            }
             if (json !is JSONObject)
                 log.fatal("Schema must be boolean or object - $resourceURL")
             PreLoadContext(
@@ -86,18 +95,34 @@ class SchemaLoader private constructor(
                 idMapping = IdMapping(json).also { idMappings[resourceURL.toURI()] = it },
                 idMappings = idMappings,
             ).scan()
+            schemaDocument.state = SchemaDocument.State.PRESCANNED
         }
         return schemaDocument
     }
 
     override fun load(): SchemaDocument {
-        TODO("Not yet implemented")
+        val schemaDocument = preLoad()
+        if (schemaDocument.state == SchemaDocument.State.PROCESSED)
+            return schemaDocument
+        schemaDocument.schema = processSchema(schemaDocument, JSONRef(schemaDocument.json).asRef())
+        schemaDocument.state = SchemaDocument.State.PROCESSED
+        return schemaDocument
     }
 
-    fun findSchemaDocument(): SchemaDocument {
+    private fun processSchema(schemaDocument: SchemaDocument, ref: JSONRef<JSONObject>): JSONSchema {
+        val elements = mutableListOf<JSONSchema.Element>()
+        ref.forEachKey<JSONValue> {
+            val handler = schemaDocument.schemaDialect.findKeywordHandler(it)
+            val schemaLocation = SchemaLocation(schemaDocument.baseURI, pointer)
+            handler.process(schemaLocation, this)?.let { element -> elements.add(element) }
+        }
+        return JSONSchema.ObjectSchema(SchemaLocation(schemaDocument.baseURI, ref.pointer), schemaDocument.baseURI, elements)
+    }
+
+    private fun findSchemaDocument(): SchemaDocument {
         documentEntries.find { it.url == resourceURL }?.let { return it }
         return SchemaDocument(
-            json = jsonLoader.load() ?: log.fatal("Schema file is \"null\""),
+            json = jsonLoader.load() ?: log.fatal("Schema file is \"null\" - $resourceURL"),
             url = resourceURL
         ).also { documentEntries.add(it) }
     }
@@ -129,6 +154,16 @@ class SchemaLoader private constructor(
 
     }
 
+    data class LoadContext(
+        val schemaDialect: SchemaDialect,
+    ) {
+
+        fun process() {
+            // TODO
+        }
+
+    }
+
     data class PreLoadContext(
         val schemaDialect: SchemaDialect,
         val baseURI: URI,
@@ -138,15 +173,12 @@ class SchemaLoader private constructor(
     ) {
 
         fun scan() {
-            val json = ref.asRef<JSONObject>().node
+            val objectRef = ref.asRef<JSONObject>()
+            val json = objectRef.node
             when (val idProperty = json["\$id"]) {
-                null -> {
-                    for (property in json.keys) {
-                        val handler = schemaDialect.findKeywordHandler(property)
-                        handler.preScan(copy(
-                            ref = ref.child<JSONValue>(property)
-                        ))
-                    }
+                null -> objectRef.forEachKey<JSONValue> {
+                    val handler = schemaDialect.findKeywordHandler(it)
+                    handler.preScan(copy(ref = this))
                 }
                 is JSONString -> {
                     val idURI = baseURI.resolve(idProperty.value).checkIdURI("\$id")
