@@ -26,16 +26,14 @@
 package io.kjson.schema.handlers
 
 import io.kjson.JSONString
-import io.kjson.JSONValue
-import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaLocation
+import io.kjson.schema.loader.SchemaLoader
 
 object CommentHandler : KeywordHandler {
 
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? {
-        ref.asRef<JSONString>()
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
+        loadContext.ref.asRef<JSONString>()
         return null
     }
 

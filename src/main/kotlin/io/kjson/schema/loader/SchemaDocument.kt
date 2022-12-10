@@ -41,16 +41,16 @@ import net.pwall.log.getLogger
 
 class SchemaDocument(
     val json: JSONValue,
-    val url: URL,
+    val url: URL?,
 ) {
 
     enum class State { INITIAL, PRESCANNED, PROCESSED }
 
     var state: State = State.INITIAL
 
-    val baseURI: URI = if (json is JSONObject && json.containsKey("\$id")) {
+    val baseURI: URI? = if (json is JSONObject && json.containsKey("\$id")) {
         json["\$id"].asStringOrNull?.let { URI(it).checkAbsolute() } ?: log.fatal("\$id must be string - $url")
-    } else url.toURI()
+    } else url?.toURI()
 
     val schemaDialect: SchemaDialect =
             if (json is JSONObject) SchemaDialect.findDialect(json) else SchemaDialect.latest()

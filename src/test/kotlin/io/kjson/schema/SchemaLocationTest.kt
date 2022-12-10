@@ -39,12 +39,14 @@ class SchemaLocationTest {
         val schemaLocation = SchemaLocation(testURI)
         expect(testURI) { schemaLocation.uri }
         expect(JSONPointer.root) { schemaLocation.pointer }
+        expect("https://kjson.io/schema/test#") { schemaLocation.toString() }
     }
 
     @Test fun `should create SchemaLocation with explicit pointer`() {
         val schemaLocation = SchemaLocation(testURI, sampleObjectPointer)
         expect(testURI) { schemaLocation.uri }
         expect(sampleObjectPointer) { schemaLocation.pointer }
+        expect("https://kjson.io/schema/test#/field1") { schemaLocation.toString() }
     }
 
     @Test fun `should create child SchemaLocation with name`() {
@@ -52,6 +54,7 @@ class SchemaLocationTest {
         val schemaLocation = baseSchemaLocation.child("field1")
         expect(testURI) { schemaLocation.uri }
         expect(sampleObjectPointer) { schemaLocation.pointer }
+        expect("https://kjson.io/schema/test#/field1") { schemaLocation.toString() }
     }
 
     @Test fun `should create child SchemaLocation with index`() {
@@ -59,6 +62,7 @@ class SchemaLocationTest {
         val schemaLocation = baseSchemaLocation.child(0)
         expect(testURI) { schemaLocation.uri }
         expect(sampleArrayPointer) { schemaLocation.pointer }
+        expect("https://kjson.io/schema/test#/0") { schemaLocation.toString() }
     }
 
 }

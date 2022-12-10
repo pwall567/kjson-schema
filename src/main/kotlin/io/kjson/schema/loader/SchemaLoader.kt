@@ -29,6 +29,7 @@ import java.io.File
 import java.net.URI
 import java.net.URL
 import java.nio.file.Path
+import io.kjson.JSON
 
 import io.kjson.JSONBoolean
 import io.kjson.JSONObject
@@ -42,10 +43,12 @@ import io.kjson.pointer.get
 import io.kjson.resource.Loader
 import io.kjson.resource.ResourceLoader
 import io.kjson.schema.JSONSchema
+import io.kjson.schema.JSONSchemaException
 import io.kjson.schema.JSONSchemaException.Companion.fatal
 import io.kjson.schema.SchemaDialect
 import io.kjson.schema.SchemaLocation
 import io.kjson.util.JSONLoader
+import io.kjson.util.Util.resolve
 import io.kjson.util.Util.withFragment
 import net.pwall.log.getLogger
 
@@ -77,6 +80,10 @@ class SchemaLoader private constructor(
         if (schemaDocument.state == SchemaDocument.State.PRESCANNED ||
                 schemaDocument.state == SchemaDocument.State.PROCESSED)
             return schemaDocument
+        return preload(schemaDocument)
+    }
+
+    private fun preload(schemaDocument: SchemaDocument): SchemaDocument {
         schemaDocument.json.let { json ->
             if (json is JSONBoolean) {
                 schemaDocument.schema = JSONSchema.booleanSchema(
@@ -104,20 +111,44 @@ class SchemaLoader private constructor(
         val schemaDocument = preLoad()
         if (schemaDocument.state == SchemaDocument.State.PROCESSED)
             return schemaDocument
-        schemaDocument.schema = processSchema(schemaDocument, JSONRef(schemaDocument.json).asRef())
+        val loadContext = LoadContext(
+            schemaDialect = schemaDocument.schemaDialect,
+            schemaLocation = SchemaLocation(schemaDocument.baseURI, JSONPointer.root),
+            ref = JSONRef(schemaDocument.json),
+        )
+//        schemaDocument.schema = processSchema(schemaDocument, JSONRef(schemaDocument.json).asRef())
+        schemaDocument.schema = loadContext.process()
         schemaDocument.state = SchemaDocument.State.PROCESSED
         return schemaDocument
     }
 
-    private fun processSchema(schemaDocument: SchemaDocument, ref: JSONRef<JSONObject>): JSONSchema {
-        val elements = mutableListOf<JSONSchema.Element>()
-        ref.forEachKey<JSONValue> {
-            val handler = schemaDocument.schemaDialect.findKeywordHandler(it)
-            val schemaLocation = SchemaLocation(schemaDocument.baseURI, pointer)
-            handler.process(schemaLocation, this)?.let { element -> elements.add(element) }
-        }
-        return JSONSchema.ObjectSchema(SchemaLocation(schemaDocument.baseURI, ref.pointer), schemaDocument.baseURI, elements)
+    fun loadFromString(string: String): SchemaDocument {
+        return loadFromJSON(JSON.parse(string) ?: throw JSONSchemaException("JSON string was \"null\""))
     }
+
+    fun loadFromJSON(json: JSONValue): SchemaDocument {
+        val schemaDocument = SchemaDocument(json, null)
+        preload(schemaDocument)
+        val loadContext = LoadContext(
+            schemaDialect = schemaDocument.schemaDialect,
+            schemaLocation = SchemaLocation(schemaDocument.baseURI, JSONPointer.root),
+            ref = JSONRef(json),
+        )
+//        schemaDocument.schema = processSchema(schemaDocument, JSONRef(schemaDocument.json).asRef())
+        schemaDocument.schema = loadContext.process()
+        schemaDocument.state = SchemaDocument.State.PROCESSED
+        return schemaDocument
+    }
+
+//    private fun processSchema(schemaDocument: SchemaDocument, ref: JSONRef<JSONObject>): JSONSchema {
+//        val elements = mutableListOf<JSONSchema.Element>()
+//        ref.forEachKey<JSONValue> {
+//            val handler = schemaDocument.schemaDialect.findKeywordHandler(it)
+//            val schemaLocation = SchemaLocation(schemaDocument.baseURI, pointer)
+//            handler.process(schemaLocation, this)?.let { element -> elements.add(element) }
+//        }
+//        return JSONSchema.ObjectSchema(SchemaLocation(schemaDocument.baseURI, ref.pointer), schemaDocument.baseURI, elements)
+//    }
 
     private fun findSchemaDocument(): SchemaDocument {
         documentEntries.find { it.url == resourceURL }?.let { return it }
@@ -156,17 +187,35 @@ class SchemaLoader private constructor(
 
     data class LoadContext(
         val schemaDialect: SchemaDialect,
+        val schemaLocation: SchemaLocation,
+        val ref: JSONRef<*>,
     ) {
 
-        fun process() {
-            // TODO
+        fun process(): JSONSchema {
+            when (val node = ref.node) {
+                is JSONBoolean -> return JSONSchema.booleanSchema(node.value, schemaLocation)
+                is JSONObject -> {
+                    val elements = mutableListOf<JSONSchema.Element>()
+                    val objectRef = ref.asRef<JSONObject>()
+                    objectRef.forEachKey<JSONValue> {
+                        val handler = schemaDialect.findKeywordHandler(it)
+                        val loadContext = this@LoadContext.copy(
+                            schemaLocation = schemaLocation.child(it),
+                            ref = this,
+                        )
+                        handler.process(loadContext)?.let { element -> elements.add(element) }
+                    }
+                    return JSONSchema.ObjectSchema(schemaLocation, null, elements)
+                }
+                else -> log.fatal("Schema must be boolean or object - $schemaLocation")
+            }
         }
 
     }
 
     data class PreLoadContext(
         val schemaDialect: SchemaDialect,
-        val baseURI: URI,
+        val baseURI: URI?,
         val ref: JSONRef<*>,
         val idMapping: IdMapping,
         val idMappings: MutableMap<URI, IdMapping>,

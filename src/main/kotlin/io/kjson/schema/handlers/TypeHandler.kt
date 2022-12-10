@@ -33,12 +33,13 @@ import io.kjson.pointer.child
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.JSONSchemaException
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaLocation
+import io.kjson.schema.loader.SchemaLoader
 import io.kjson.schema.validator.TypeValidator
 
 object TypeHandler : KeywordHandler {
 
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element {
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
+        val ref = loadContext.ref
         val types: List<JSONSchema.Type> = when {
             ref.isRef<JSONString>() -> listOf(checkType(ref))
             ref.isRef<JSONArray>() -> {
@@ -47,7 +48,7 @@ object TypeHandler : KeywordHandler {
             }
             else -> throw JSONSchemaException("Invalid type - $ref")
         }
-        return TypeValidator(schemaLocation, types)
+        return TypeValidator(loadContext.schemaLocation, types)
     }
 
     private fun checkType(item: JSONRef<*>): JSONSchema.Type {

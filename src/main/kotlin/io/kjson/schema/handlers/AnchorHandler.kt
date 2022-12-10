@@ -26,12 +26,9 @@
 package io.kjson.schema.handlers
 
 import io.kjson.JSONString
-import io.kjson.JSONValue
-import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.JSONSchemaException.Companion.fatal
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaLocation
 import io.kjson.schema.loader.SchemaLoader
 import net.pwall.log.getLogger
 
@@ -41,7 +38,7 @@ object AnchorHandler : KeywordHandler {
 
     private val anchorRegex = Regex("^[A-Za-z_][-A-Za-z0-9._]*\$") // pattern from 2020-12 meta schema
 
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? = null // do nothing
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? = null // do nothing
 
     override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
         val anchor = preLoadContext.ref.asRef<JSONString>().node.value

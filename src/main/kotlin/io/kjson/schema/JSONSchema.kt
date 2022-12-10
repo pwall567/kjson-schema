@@ -57,7 +57,7 @@ sealed class JSONSchema(val location: SchemaLocation) {
 
     class ObjectSchema(
         location: SchemaLocation,
-        val id: URI,
+        val id: URI?,
         private val elements: List<Element>,
     ) : JSONSchema(location) {
 

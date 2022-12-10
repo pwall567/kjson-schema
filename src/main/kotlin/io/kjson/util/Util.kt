@@ -40,6 +40,8 @@ object Util {
     fun URI.withFragment(pointer: JSONPointer): URI =
             withFragment(pointer.takeIf { it != JSONPointer.root }?.toString())
 
+    fun URI?.resolve(string: String): URI = if (this != null) resolve(string) else URI(string)
+
     fun ResourceDescriptor.looksLikeYAML(): Boolean {
         mimeType?.let { // there is no standard mime type for YAML
             if (it.contains("yaml", ignoreCase = true) || it.contains("yml", ignoreCase = true)) // beware - symlink!

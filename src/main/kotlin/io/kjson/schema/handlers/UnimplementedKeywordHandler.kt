@@ -25,19 +25,17 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONValue
-import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaLocation
+import io.kjson.schema.loader.SchemaLoader
 import net.pwall.log.getLogger
 
 object UnimplementedKeywordHandler : KeywordHandler {
 
     private val log = getLogger()
 
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? {
-        log.warn { "Keyword \"${ref.pointer.current}\" not implemented" }
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
+        log.warn { "Keyword \"${loadContext.ref.pointer.current}\" not implemented" }
         return null
     }
 

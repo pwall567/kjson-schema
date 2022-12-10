@@ -28,14 +28,23 @@ package io.kjson.schema
 import java.net.URI
 
 import io.kjson.pointer.JSONPointer
+import io.kjson.util.Util.withFragment
 
 data class SchemaLocation(
-    val uri: URI?, // TODO consider - should this be nullable?
+    val uri: URI?,
     val pointer: JSONPointer = JSONPointer.root,
 ) {
 
     fun child(key: String) = SchemaLocation(uri, pointer.child(key))
 
     fun child(index: Int) = SchemaLocation(uri, pointer.child(index))
+
+    override fun toString(): String = buildString {
+        uri?.let {
+            append(it.withFragment(null))
+        }
+        append('#')
+        append(pointer)
+    }
 
 }

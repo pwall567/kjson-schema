@@ -25,14 +25,12 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONValue
-import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.SchemaLocation
+import io.kjson.schema.loader.SchemaLoader
 
 object NullKeywordHandler : KeywordHandler {
 
-    override fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element? = null
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? = null
 
 }

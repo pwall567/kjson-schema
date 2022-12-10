@@ -35,6 +35,7 @@ import kotlin.test.fail
 import java.net.URI
 
 import io.kjson.JSONInt
+import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer
@@ -47,6 +48,26 @@ class SchemaLoaderTest {
     @Test fun `should load trivial schema`() {
         val loader = SchemaLoader(ResourceLoader.classPathURL("/schema/") ?: fail("Can't locate /schema"))
         val schemaDocument = loader.load("dummy-schema.schema.json")
+        assertIs<JSONSchema.ObjectSchema>(schemaDocument.schema)
+        assertTrue { schemaDocument.schema.validate(JSONRef(JSONInt(123))) }
+        assertFalse { schemaDocument.schema.validate(JSONRef(JSONString("abc"))) }
+    }
+
+    @Test fun `should load schema from string`() {
+        val loader = SchemaLoader()
+        val json = """{"type":"integer"}"""
+        val schemaDocument = loader.loadFromString(json)
+        assertIs<JSONSchema.ObjectSchema>(schemaDocument.schema)
+        assertTrue { schemaDocument.schema.validate(JSONRef(JSONInt(123))) }
+        assertFalse { schemaDocument.schema.validate(JSONRef(JSONString("abc"))) }
+    }
+
+    @Test fun `should load schema from JSON`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("type", "integer")
+        }
+        val schemaDocument = loader.loadFromJSON(json)
         assertIs<JSONSchema.ObjectSchema>(schemaDocument.schema)
         assertTrue { schemaDocument.schema.validate(JSONRef(JSONInt(123))) }
         assertFalse { schemaDocument.schema.validate(JSONRef(JSONString("abc"))) }

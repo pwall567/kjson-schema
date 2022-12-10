@@ -25,13 +25,11 @@
 
 package io.kjson.schema
 
-import io.kjson.JSONValue
-import io.kjson.pointer.JSONRef
 import io.kjson.schema.loader.SchemaLoader
 
 interface KeywordHandler {
 
-    fun process(schemaLocation: SchemaLocation, ref: JSONRef<JSONValue>): JSONSchema.Element?
+    fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element?
 
     fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
         // default - do nothing
