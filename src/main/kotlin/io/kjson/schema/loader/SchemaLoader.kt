@@ -29,8 +29,8 @@ import java.io.File
 import java.net.URI
 import java.net.URL
 import java.nio.file.Path
-import io.kjson.JSON
 
+import io.kjson.JSON
 import io.kjson.JSONBoolean
 import io.kjson.JSONObject
 import io.kjson.JSONString
@@ -225,25 +225,27 @@ class SchemaLoader private constructor(
     ) {
 
         fun scan() {
-            val objectRef = ref.asRef<JSONObject>()
-            val json = objectRef.node
-            when (val idProperty = json["\$id"]) {
-                null -> objectRef.forEachKey<JSONValue> {
-                    val handler = schemaDialect.findKeywordHandler(it)
-                    handler.preScan(copy(ref = this))
-                }
-                is JSONString -> {
-                    val idURI = baseURI.resolve(idProperty.value).checkIdURI("\$id")
-                    for (property in json.keys) {
-                        val handler = schemaDialect.findKeywordHandler(property)
-                        handler.preScan(copy(
-                            baseURI = idURI,
-                            ref = JSONRef(json).child<JSONValue>(property),
-                            idMapping = IdMapping(json).also { idMappings[idURI] = it },
-                        ))
+            if (ref.isRef<JSONObject>()) {
+                val objectRef = ref.asRef<JSONObject>()
+                val json = objectRef.node
+                when (val idProperty = json["\$id"]) {
+                    null -> objectRef.forEachKey<JSONValue> {
+                        val handler = schemaDialect.findKeywordHandler(it)
+                        handler.preScan(copy(ref = this))
                     }
+                    is JSONString -> {
+                        val idURI = baseURI.resolve(idProperty.value).checkIdURI("\$id")
+                        for (property in json.keys) {
+                            val handler = schemaDialect.findKeywordHandler(property)
+                            handler.preScan(copy(
+                                baseURI = idURI,
+                                ref = JSONRef(json).child<JSONValue>(property),
+                                idMapping = IdMapping(json).also { idMappings[idURI] = it },
+                            ))
+                        }
+                    }
+                    else -> log.fatal("\$id must be string")
                 }
-                else -> log.fatal("\$id must be string")
             }
         }
 

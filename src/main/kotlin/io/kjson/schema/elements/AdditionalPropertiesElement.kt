@@ -1,5 +1,5 @@
 /*
- * @(#) PropertiesElement.kt
+ * @(#) AdditionalPropertiesElement.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -29,28 +29,45 @@ import io.kjson.JSONObject
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
-import io.kjson.pointer.hasChild
-import io.kjson.pointer.untypedChild
+import io.kjson.pointer.forEachKey
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.SchemaLocation
 import io.kjson.schema.output.BasicOutput
 import io.kjson.schema.output.Output
 
-class PropertiesElement(location: SchemaLocation, val properties: List<Pair<String, JSONSchema>>) :
+class AdditionalPropertiesElement(location: SchemaLocation, val schema: JSONSchema) :
         JSONSchema.Element(location) {
 
-    override val keyword: String = "properties"
+    override val keyword: String = "additionalProperties"
 
     override fun validate(parent: JSONSchema.ObjectSchema, instance: JSONRef<*>): Boolean {
         if (!instance.isRef<JSONObject>())
             return true
         val refObject = instance.asRef<JSONObject>()
-        for ((propertyName, propertySchema) in properties) {
-            if (refObject.hasChild<JSONValue?>(propertyName) &&
-                    !propertySchema.validate(refObject.untypedChild(propertyName)))
+        refObject.forEachKey<JSONValue?> {
+            if (!inProperties(parent, it) && !inPatternProperties(parent, it) && !schema.validate(this))
                 return false
         }
         return true
+    }
+
+    private fun inProperties(parent: JSONSchema.ObjectSchema, name: String): Boolean {
+        return parent.elements.findIsInstance<PropertiesElement>()?.properties?.any {
+            it.first == name
+        } ?: false
+    }
+
+    private fun inPatternProperties(parent: JSONSchema.ObjectSchema, name: String): Boolean {
+        return parent.elements.findIsInstance<PatternPropertiesElement>()?.properties?.any {
+            it.first.containsMatchIn(name)
+        } ?: false
+    }
+
+    private inline fun <reified R> Iterable<*>.findIsInstance(): R? {
+        for (item in this)
+            if (item is R)
+                return item
+        return null
     }
 
     override fun getBasicOutput(
@@ -62,15 +79,19 @@ class PropertiesElement(location: SchemaLocation, val properties: List<Pair<Stri
             return BasicOutput(valid = true)
         val refObject = instance.asRef<JSONObject>()
         val errors = mutableListOf<BasicOutput.Entry>()
-        for ((propertyName, propertySchema) in properties) {
-            if (refObject.hasChild<JSONValue?>(propertyName)) {
-                val propertyResult = propertySchema.getBasicOutput(refObject.untypedChild(propertyName),
-                        relativeLocation.child(propertyName))
-                if (!propertyResult.valid)
-                    propertyResult.errors?.let { errors.addAll(it) }
+        refObject.forEachKey<JSONValue?> {
+            if (!inProperties(parent, it) && !inPatternProperties(parent, it)) {
+                val result = schema.getBasicOutput(this, relativeLocation)
+                if (!result.valid) {
+                    errors.add(createBasicOutputUnit(this, relativeLocation,
+                        "Additional property '$it' found but was invalid"))
+                    result.errors?.let { e -> errors.addAll(e) }
+                }
             }
         }
-        return basicResult(instance, relativeLocation, errors)
+        if (errors.isEmpty())
+            return BasicOutput(true)
+        return BasicOutput(false, errors)
     }
 
     override fun getDetailedOutput(

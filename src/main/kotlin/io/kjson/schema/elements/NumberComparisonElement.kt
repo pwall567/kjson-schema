@@ -26,6 +26,7 @@
 package io.kjson.schema.elements
 
 import java.math.BigDecimal
+
 import io.kjson.JSONDecimal
 import io.kjson.JSONInt
 import io.kjson.JSONLong
@@ -39,12 +40,13 @@ import io.kjson.schema.output.Output
 
 abstract class NumberComparisonElement(location: SchemaLocation, val limit: JSONNumber) : JSONSchema.Element(location) {
 
-    override fun validate(instance: JSONRef<*>): Boolean = when (val value = instance.node) {
-        is JSONInt -> validateInt(value)
-        is JSONLong -> validateLong(value)
-        is JSONDecimal -> validateDecimal(value)
-        else -> true
-    }
+    override fun validate(parent: JSONSchema.ObjectSchema, instance: JSONRef<*>): Boolean =
+        when (val value = instance.node) {
+            is JSONInt -> validateInt(value)
+            is JSONLong -> validateLong(value)
+            is JSONDecimal -> validateDecimal(value)
+            else -> true
+        }
 
     private fun validateInt(value: JSONInt): Boolean = when (limit) {
         is JSONInt -> compareInt(value.value, limit.value)
@@ -72,16 +74,28 @@ abstract class NumberComparisonElement(location: SchemaLocation, val limit: JSON
 
     abstract fun getErrorString(): String
 
-    override fun getBasicOutput(instance: JSONRef<*>, relativeLocation: JSONPointer) = if (validate(instance))
+    override fun getBasicOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): BasicOutput = if (validate(parent, instance))
         BasicOutput(valid = true)
     else
         createBasicErrorOutput(instance, relativeLocation, "${getErrorString()}, was ${instance.node}")
 
-    override fun getDetailedOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
+    override fun getDetailedOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
         TODO()
     }
 
-    override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
+    override fun getVerboseOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
         TODO()
     }
 

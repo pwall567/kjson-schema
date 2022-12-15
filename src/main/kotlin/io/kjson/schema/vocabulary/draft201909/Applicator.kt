@@ -29,6 +29,7 @@ import java.net.URI
 
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.Vocabulary
+import io.kjson.schema.handlers.AdditionalPropertiesHandler
 import io.kjson.schema.handlers.NullKeywordHandler
 import io.kjson.schema.handlers.PatternPropertiesHandler
 import io.kjson.schema.handlers.PropertiesHandler
@@ -42,7 +43,7 @@ object Applicator : Vocabulary {
         "unevaluatedItems" -> NullKeywordHandler // TODO pre-scan should examine schemata
         "items" -> NullKeywordHandler // TODO pre-scan should examine schema
         "contains" -> NullKeywordHandler // TODO pre-scan should examine schema???
-        "additionalProperties" -> NullKeywordHandler // TODO pre-scan should examine schema
+        "additionalProperties" -> AdditionalPropertiesHandler
         "unevaluatedProperties" -> NullKeywordHandler // TODO pre-scan should examine schema
         "properties" -> PropertiesHandler
         "patternProperties" -> PatternPropertiesHandler

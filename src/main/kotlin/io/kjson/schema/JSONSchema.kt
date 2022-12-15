@@ -27,14 +27,14 @@ package io.kjson.schema
 
 import java.net.URI
 import java.util.BitSet
-import io.kjson.JSONValue
 
+import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
 import io.kjson.schema.output.BasicOutput
 import io.kjson.schema.output.Output
 
-sealed class JSONSchema(val location: SchemaLocation) {
+sealed class JSONSchema(location: SchemaLocation) : JSONSchemaNode(location) {
 
     enum class Type(val value: String) {
         NULL("null"),
@@ -68,75 +68,6 @@ sealed class JSONSchema(val location: SchemaLocation) {
 
     fun getVerboseOutput(json: JSONValue?): Output = getVerboseOutput(JSONRef(json))
 
-    private fun createOutput(
-        valid: Boolean,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-        error: String? = null,
-        errors: List<Output>? = null,
-        annotation: String? = null,
-    ) = Output(
-        valid = valid,
-        keywordLocation = relativeLocation,
-        absoluteKeywordLocation = location.toAbsoluteKeywordLocation(),
-        instanceLocation = instance.pointer,
-        error = error,
-        errors = errors,
-        annotation = annotation,
-    )
-
-    fun createValidOutput(
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ) = createOutput(true, instance, relativeLocation)
-
-    fun createErrorOutput(
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-        error: String? = null,
-        errors: List<Output>? = null,
-    ) = createOutput(false, instance, relativeLocation, error = error, errors = errors)
-
-    fun createAnnotation(
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-        annotation: String? = null,
-    ) = createOutput(true, instance, relativeLocation, annotation = annotation)
-
-    fun createBasicErrorOutput(
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-        error: String,
-    ): BasicOutput {
-        return BasicOutput(
-            valid = false,
-            errors = listOf(createBasicOutputUnit(instance, relativeLocation, error))
-        )
-    }
-
-    fun basicResult(instance: JSONRef<*>, relativeLocation: JSONPointer, errors: List<BasicOutput.Entry>): BasicOutput {
-        return if (errors.isEmpty())
-            BasicOutput(valid = true)
-        else {
-            mutableListOf<BasicOutput.Entry>().let {
-                it.add(createBasicOutputUnit(instance, relativeLocation, "A subschema had errors"))
-                it.addAll(errors)
-                BasicOutput(valid = false, errors = it)
-            }
-        }
-    }
-
-    fun createBasicOutputUnit(
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-        error: String,
-    ): BasicOutput.Entry = BasicOutput.Entry(
-        keywordLocation = relativeLocation,
-        absoluteKeywordLocation = location.toAbsoluteKeywordLocation(),
-        instanceLocation = instance.pointer,
-        error = error,
-    )
-
     class InstanceContext(val ref: JSONRef<*>) {
         var propertiesUsed: MutableSet<String>? = null
         var itemsUsed: BitSet? = null
@@ -147,7 +78,7 @@ sealed class JSONSchema(val location: SchemaLocation) {
         override fun validate(instance: JSONRef<*>): Boolean = value
 
         override fun getBasicOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): BasicOutput {
-            TODO("Not yet implemented")
+            return BasicOutput(value, if (value) null else emptyList())
         }
 
         override fun getDetailedOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
@@ -160,8 +91,30 @@ sealed class JSONSchema(val location: SchemaLocation) {
 
     }
 
-    abstract class Element(location: SchemaLocation) : JSONSchema(location) {
+    abstract class Element(location: SchemaLocation) : JSONSchemaNode(location) {
+
         abstract val keyword: String
+
+        abstract fun validate(parent: ObjectSchema, instance: JSONRef<*>): Boolean
+
+        abstract fun getBasicOutput(
+            parent: ObjectSchema,
+            instance: JSONRef<*>,
+            relativeLocation: JSONPointer,
+        ): BasicOutput
+
+        abstract fun getDetailedOutput(
+            parent: ObjectSchema,
+            instance: JSONRef<*>,
+            relativeLocation: JSONPointer,
+        ): Output
+
+        abstract fun getVerboseOutput(
+            parent: ObjectSchema,
+            instance: JSONRef<*>,
+            relativeLocation: JSONPointer,
+        ): Output
+
     }
 
     class ObjectSchema(
@@ -170,14 +123,14 @@ sealed class JSONSchema(val location: SchemaLocation) {
         val elements: List<Element>,
     ) : JSONSchema(location) {
 
-        override fun validate(instance: JSONRef<*>): Boolean = elements.all { it.validate(instance) }
+        override fun validate(instance: JSONRef<*>): Boolean = elements.all { it.validate(this, instance) }
 
         override fun getBasicOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): BasicOutput {
             // TODO review this
             val errors = mutableListOf<BasicOutput.Entry>()
             for (element in elements) {
                 val childLocation = relativeLocation.child(element.keyword)
-                element.getBasicOutput(instance, childLocation).let { result ->
+                element.getBasicOutput(this, instance, childLocation).let { result ->
                     if (!result.valid)
                         result.errors?.let { errors.addAll(it) }
                 }

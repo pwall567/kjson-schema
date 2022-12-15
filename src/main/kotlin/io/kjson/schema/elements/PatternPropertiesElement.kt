@@ -40,7 +40,7 @@ class PatternPropertiesElement(location: SchemaLocation, val properties: List<Pa
 
     override val keyword: String = "patternProperties"
 
-    override fun validate(instance: JSONRef<*>): Boolean {
+    override fun validate(parent: JSONSchema.ObjectSchema, instance: JSONRef<*>): Boolean {
         if (!instance.isRef<JSONObject>())
             return true
         val refObject = instance.asRef<JSONObject>()
@@ -53,7 +53,11 @@ class PatternPropertiesElement(location: SchemaLocation, val properties: List<Pa
         return true
     }
 
-    override fun getBasicOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): BasicOutput {
+    override fun getBasicOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): BasicOutput {
         if (!instance.isRef<JSONObject>())
             return BasicOutput(valid = true)
         val refObject = instance.asRef<JSONObject>()
@@ -70,13 +74,21 @@ class PatternPropertiesElement(location: SchemaLocation, val properties: List<Pa
         return basicResult(instance, relativeLocation, errors)
     }
 
-    override fun getDetailedOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
+    override fun getDetailedOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
         if (!instance.isRef<JSONObject>())
             return createValidOutput(instance, relativeLocation)
         TODO("Not yet implemented")
     }
 
-    override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
+    override fun getVerboseOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
         if (!instance.isRef<JSONObject>())
             return createValidOutput(instance, relativeLocation)
         TODO("Not yet implemented")

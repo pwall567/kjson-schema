@@ -1,5 +1,5 @@
 /*
- * @(#) BasicOutput.kt
+ * @(#) AdditionalPropertiesHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,27 +23,21 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema.output
+package io.kjson.schema.handlers
 
-import java.net.URI
+import io.kjson.schema.JSONSchema
+import io.kjson.schema.KeywordHandler
+import io.kjson.schema.elements.AdditionalPropertiesElement
+import io.kjson.schema.loader.SchemaLoader
 
-import io.kjson.pointer.JSONPointer
+object AdditionalPropertiesHandler : KeywordHandler {
 
-data class BasicOutput(
-    val valid: Boolean,
-    val errors: List<Entry>? = null,
-) {
-
-    init {
-        if (!valid)
-            require(errors != null)
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
+        return AdditionalPropertiesElement(loadContext.schemaLocation, loadContext.process()) // TODO check
     }
 
-    data class Entry(
-        val keywordLocation: JSONPointer,
-        val absoluteKeywordLocation: URI? = null,
-        val instanceLocation: JSONPointer,
-        val error: String,
-    )
+    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
+        preLoadContext.scan() // TODO check
+    }
 
 }

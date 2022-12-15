@@ -41,43 +41,56 @@ import io.kjson.schema.SchemaLocation
 import io.kjson.schema.output.BasicOutput
 import io.kjson.schema.output.Output
 
-class TypeElement(location: SchemaLocation, val types: List<Type>) : JSONSchema.Element(location) {
+class TypeElement(location: SchemaLocation, val types: List<JSONSchema.Type>) : JSONSchema.Element(location) {
 
     override val keyword: String = "type"
 
-    override fun validate(instance: JSONRef<*>): Boolean {
+    override fun validate(parent: JSONSchema.ObjectSchema, instance: JSONRef<*>): Boolean {
         val node = instance.node
         for (type in types) {
             when (type) {
-                Type.NULL -> if (node == null) return true
-                Type.BOOLEAN -> if (node is JSONBoolean) return true
-                Type.OBJECT -> if (node is JSONObject) return true
-                Type.ARRAY -> if (node is JSONArray) return true
-                Type.STRING -> if (node is JSONString) return true
-                Type.NUMBER -> if (node is JSONNumber) return true
-                Type.INTEGER -> if (node is JSONNumber && node.isIntegral()) return true
+                JSONSchema.Type.NULL -> if (node == null) return true
+                JSONSchema.Type.BOOLEAN -> if (node is JSONBoolean) return true
+                JSONSchema.Type.OBJECT -> if (node is JSONObject) return true
+                JSONSchema.Type.ARRAY -> if (node is JSONArray) return true
+                JSONSchema.Type.STRING -> if (node is JSONString) return true
+                JSONSchema.Type.NUMBER -> if (node is JSONNumber) return true
+                JSONSchema.Type.INTEGER -> if (node is JSONNumber && node.isIntegral()) return true
             }
         }
         return false
     }
 
-    override fun getBasicOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): BasicOutput =
-        if (validate(instance))
+    override fun getBasicOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): BasicOutput =
+        if (validate(parent, instance))
             BasicOutput(valid = true)
         else
             createBasicErrorOutput(instance, relativeLocation,
                 "Incorrect type, expected ${types.joinToString(separator = " or ") { it.value }}" +
                         " but was ${instance.node.typeName}")
 
-    override fun getDetailedOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
+    override fun getDetailedOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
         TODO("Not yet implemented")
     }
 
-    override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
+    override fun getVerboseOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
         TODO("Not yet implemented")
     }
 
     companion object {
+
         val JSONValue?.typeName: String
             get() = when (this) {
                 null -> "null"
@@ -89,6 +102,7 @@ class TypeElement(location: SchemaLocation, val types: List<Type>) : JSONSchema.
                 is JSONArray -> "array"
                 is JSONObject -> "object"
             }
+
     }
 
 }
