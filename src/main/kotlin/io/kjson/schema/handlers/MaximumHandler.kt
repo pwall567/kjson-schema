@@ -1,5 +1,5 @@
 /*
- * @(#) SchemaLocation.kt
+ * @(#) MaximumHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,30 +23,25 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema
+package io.kjson.schema.handlers
 
-import java.net.URI
+import io.kjson.JSONNumber
+import io.kjson.schema.JSONSchema
+import io.kjson.schema.JSONSchemaException.Companion.fatal
+import io.kjson.schema.KeywordHandler
+import io.kjson.schema.elements.MaximumElement
+import io.kjson.schema.loader.SchemaLoader
+import net.pwall.log.getLogger
 
-import io.kjson.pointer.JSONPointer
-import io.kjson.util.Util.withFragment
+object MaximumHandler : KeywordHandler {
 
-data class SchemaLocation(
-    val uri: URI?,
-    val pointer: JSONPointer = JSONPointer.root,
-) {
+    private val log = getLogger()
 
-    fun child(key: String) = SchemaLocation(uri, pointer.child(key))
-
-    fun child(index: Int) = SchemaLocation(uri, pointer.child(index))
-
-    override fun toString(): String = buildString {
-        uri?.let {
-            append(it.withFragment(null))
-        }
-        append('#')
-        append(pointer)
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
+        val node = loadContext.ref.node
+        if (node !is JSONNumber)
+            log.fatal("maximum value must be number") // TODO add ", was xxxx" ?
+        return MaximumElement(loadContext.schemaLocation, node)
     }
-
-    fun toAbsoluteKeywordLocation(): URI? = uri?.resolve("#${pointer.toURIFragment()}")
 
 }

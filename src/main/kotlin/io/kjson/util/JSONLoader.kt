@@ -69,19 +69,19 @@ class JSONLoader private constructor(
     override fun resolvedLoader(resourcePath: Path?, resourceURL: URL) = JSONLoader(resourcePath, resourceURL)
 
     fun loadObject(name: String): JSONObject = load(name).let {
-        it.asObjectOrNull ?: throw JSONIncorrectTypeException("Resource", JSONObject::class, it, name)
+        it.asObjectOrNull ?: throw JSONIncorrectTypeException("Resource", "JSONObject", it, name)
     }
 
     fun loadArray(name: String): JSONArray = load(name).let {
-        it.asArrayOrNull ?: throw JSONIncorrectTypeException("Resource", JSONArray::class, it, name)
+        it.asArrayOrNull ?: throw JSONIncorrectTypeException("Resource", "JSONArray", it, name)
     }
 
     fun loadObject(): JSONObject = load().let {
-        it.asObjectOrNull ?: throw JSONIncorrectTypeException("Resource", JSONObject::class, it, resourceURL)
+        it.asObjectOrNull ?: throw JSONIncorrectTypeException("Resource", "JSONObject", it, resourceURL)
     }
 
     fun loadArray(): JSONArray = load().let {
-        it.asArrayOrNull ?: throw JSONIncorrectTypeException("Resource", JSONArray::class, it, resourceURL)
+        it.asArrayOrNull ?: throw JSONIncorrectTypeException("Resource", "JSONArray", it, resourceURL)
     }
 
 }

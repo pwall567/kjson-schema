@@ -1,5 +1,5 @@
 /*
- * @(#) SchemaLocation.kt
+ * @(#) MaximumElement.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,30 +23,23 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema
+package io.kjson.schema.elements
 
-import java.net.URI
+import java.math.BigDecimal
 
-import io.kjson.pointer.JSONPointer
-import io.kjson.util.Util.withFragment
+import io.kjson.JSONNumber
+import io.kjson.schema.SchemaLocation
 
-data class SchemaLocation(
-    val uri: URI?,
-    val pointer: JSONPointer = JSONPointer.root,
-) {
+class MaximumElement(location: SchemaLocation, maximum: JSONNumber) : NumberComparisonElement(location, maximum) {
 
-    fun child(key: String) = SchemaLocation(uri, pointer.child(key))
+    override val keyword: String = "maximum"
 
-    fun child(index: Int) = SchemaLocation(uri, pointer.child(index))
+    override fun compareInt(a: Int, b: Int): Boolean = a <= b
 
-    override fun toString(): String = buildString {
-        uri?.let {
-            append(it.withFragment(null))
-        }
-        append('#')
-        append(pointer)
-    }
+    override fun compareLong(a: Long, b: Long): Boolean = a <= b
 
-    fun toAbsoluteKeywordLocation(): URI? = uri?.resolve("#${pointer.toURIFragment()}")
+    override fun compareDecimal(a: BigDecimal, b: BigDecimal): Boolean = a <= b
+
+    override fun getErrorString(): String = "Number > maximum $limit"
 
 }

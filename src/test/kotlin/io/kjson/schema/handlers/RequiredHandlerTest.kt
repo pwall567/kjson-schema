@@ -1,5 +1,5 @@
 /*
- * @(#) SchemaLocation.kt
+ * @(#) RequiredHandlerTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,30 +23,39 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema
+package io.kjson.schema.handlers
 
-import java.net.URI
+import kotlin.test.Test
+import kotlin.test.assertIs
+import kotlin.test.expect
+import io.kjson.JSONArray
 
-import io.kjson.pointer.JSONPointer
-import io.kjson.util.Util.withFragment
+import io.kjson.JSONObject
+import io.kjson.schema.JSONSchema
+import io.kjson.schema.elements.RequiredElement
+import io.kjson.schema.loader.SchemaLoader
 
-data class SchemaLocation(
-    val uri: URI?,
-    val pointer: JSONPointer = JSONPointer.root,
-) {
+class RequiredHandlerTest {
 
-    fun child(key: String) = SchemaLocation(uri, pointer.child(key))
-
-    fun child(index: Int) = SchemaLocation(uri, pointer.child(index))
-
-    override fun toString(): String = buildString {
-        uri?.let {
-            append(it.withFragment(null))
+    @Test fun `should create required element`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("required", JSONArray.build {
+                add("aaa")
+                add("bbb")
+                add("ccc")
+            })
         }
-        append('#')
-        append(pointer)
+        val schemaDocument = loader.loadFromJSON(json)
+        val schema = schemaDocument.schema
+        assertIs<JSONSchema.ObjectSchema>(schema)
+        val element = schema.elements[0]
+        assertIs<RequiredElement>(element)
+        val propertyNames = element.propertyNames
+        expect(3) { propertyNames.size }
+        expect("aaa") { propertyNames[0] }
+        expect("bbb") { propertyNames[1] }
+        expect("ccc") { propertyNames[2] }
     }
-
-    fun toAbsoluteKeywordLocation(): URI? = uri?.resolve("#${pointer.toURIFragment()}")
 
 }

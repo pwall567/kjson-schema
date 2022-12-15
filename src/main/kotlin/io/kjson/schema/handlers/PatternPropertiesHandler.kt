@@ -1,5 +1,5 @@
 /*
- * @(#) PropertiesHandler.kt
+ * @(#) PatternPropertiesHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -32,10 +32,10 @@ import io.kjson.pointer.forEachKey
 import io.kjson.pointer.untypedChild
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
-import io.kjson.schema.elements.PropertiesElement
+import io.kjson.schema.elements.PatternPropertiesElement
 import io.kjson.schema.loader.SchemaLoader
 
-object PropertiesHandler : KeywordHandler {
+object PatternPropertiesHandler : KeywordHandler {
 
     override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
         val ref = loadContext.ref
@@ -43,12 +43,12 @@ object PropertiesHandler : KeywordHandler {
             throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
         val objectRef = ref.asRef<JSONObject>()
         val properties = objectRef.node.keys.map {
-            it to loadContext.copy(
+            Regex(it) to loadContext.copy(
                 schemaLocation = loadContext.schemaLocation.child(it),
                 ref = objectRef.untypedChild(it)
             ).process()
         }
-        return PropertiesElement(loadContext.schemaLocation, properties)
+        return PatternPropertiesElement(loadContext.schemaLocation, properties)
     }
 
     override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {

@@ -1,5 +1,5 @@
 /*
- * @(#) TypeValidator.kt
+ * @(#) MinimumElement.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,35 +23,23 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema.validator
+package io.kjson.schema.elements
 
-import io.kjson.JSONArray
-import io.kjson.JSONBoolean
+import java.math.BigDecimal
+
 import io.kjson.JSONNumber
-import io.kjson.JSONObject
-import io.kjson.JSONString
-import io.kjson.pointer.JSONRef
-import io.kjson.schema.JSONSchema
 import io.kjson.schema.SchemaLocation
 
-class TypeValidator(location: SchemaLocation, val types: List<Type>) : JSONSchema.Element(location) {
+class MinimumElement(location: SchemaLocation, minimum: JSONNumber) : NumberComparisonElement(location, minimum) {
 
-    override val keyword: String = "type"
+    override val keyword: String = "minimum"
 
-    override fun validate(instance: JSONRef<*>): Boolean {
-        val node = instance.node
-        for (type in types) {
-            when (type) {
-                Type.NULL -> if (node == null) return true
-                Type.BOOLEAN -> if (node is JSONBoolean) return true
-                Type.OBJECT -> if (node is JSONObject) return true
-                Type.ARRAY -> if (node is JSONArray) return true
-                Type.STRING -> if (node is JSONString) return true
-                Type.NUMBER -> if (node is JSONNumber) return true
-                Type.INTEGER -> if (node is JSONNumber && node.isIntegral()) return true
-            }
-        }
-        return false
-    }
+    override fun compareInt(a: Int, b: Int): Boolean = a >= b
+
+    override fun compareLong(a: Long, b: Long): Boolean = a >= b
+
+    override fun compareDecimal(a: BigDecimal, b: BigDecimal): Boolean = a >= b
+
+    override fun getErrorString(): String = "Number < minimum $limit"
 
 }

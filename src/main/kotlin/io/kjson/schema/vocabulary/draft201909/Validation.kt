@@ -28,6 +28,9 @@ package io.kjson.schema.vocabulary.draft201909
 import java.net.URI
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.Vocabulary
+import io.kjson.schema.handlers.MaximumHandler
+import io.kjson.schema.handlers.MinimumHandler
+import io.kjson.schema.handlers.RequiredHandler
 import io.kjson.schema.handlers.TypeHandler
 import io.kjson.schema.handlers.UnimplementedKeywordHandler
 
@@ -37,9 +40,9 @@ object Validation : Vocabulary {
 
     override fun findHandler(keyword: String): KeywordHandler? = when (keyword) {
         "multipleOf" -> UnimplementedKeywordHandler // TODO
-        "maximum" -> UnimplementedKeywordHandler // TODO
+        "maximum" -> MaximumHandler
         "exclusiveMaximum" -> UnimplementedKeywordHandler // TODO
-        "minimum" -> UnimplementedKeywordHandler // TODO
+        "minimum" -> MinimumHandler
         "exclusiveMinimum" -> UnimplementedKeywordHandler // TODO
         "maxLength" -> UnimplementedKeywordHandler // TODO
         "minLength" -> UnimplementedKeywordHandler // TODO
@@ -51,7 +54,7 @@ object Validation : Vocabulary {
         "minContains" -> UnimplementedKeywordHandler // TODO
         "maxProperties" -> UnimplementedKeywordHandler // TODO
         "minProperties" -> UnimplementedKeywordHandler // TODO
-        "required" -> UnimplementedKeywordHandler // TODO
+        "required" -> RequiredHandler
         "dependentRequired" -> UnimplementedKeywordHandler // TODO
         "const" -> UnimplementedKeywordHandler // TODO
         "enum" -> UnimplementedKeywordHandler // TODO

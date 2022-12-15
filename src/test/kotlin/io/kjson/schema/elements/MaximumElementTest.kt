@@ -1,5 +1,5 @@
 /*
- * @(#) SchemaLocation.kt
+ * @(#) MaximumElementTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,30 +23,40 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema
+package io.kjson.schema.elements
 
-import java.net.URI
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
-import io.kjson.pointer.JSONPointer
-import io.kjson.util.Util.withFragment
+import io.kjson.JSONInt
+import io.kjson.JSONObject
+import io.kjson.schema.loader.SchemaLoader
 
-data class SchemaLocation(
-    val uri: URI?,
-    val pointer: JSONPointer = JSONPointer.root,
-) {
+class MaximumElementTest {
 
-    fun child(key: String) = SchemaLocation(uri, pointer.child(key))
-
-    fun child(index: Int) = SchemaLocation(uri, pointer.child(index))
-
-    override fun toString(): String = buildString {
-        uri?.let {
-            append(it.withFragment(null))
+    @Test fun `should validate number less than or equal to maximum`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("maximum", 42)
         }
-        append('#')
-        append(pointer)
+        val schemaDocument = loader.loadFromJSON(json)
+        val schema = schemaDocument.schema
+        assertTrue(schema.validate(JSONInt(27)))
+        assertFalse(schema.validate(JSONInt(54)))
     }
 
-    fun toAbsoluteKeywordLocation(): URI? = uri?.resolve("#${pointer.toURIFragment()}")
+    @Test fun `should return basic output for number less than maximum`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("maximum", 42)
+        }
+        val schemaDocument = loader.loadFromJSON(json)
+        val schema = schemaDocument.schema
+        val basicOutput = schema.getBasicOutput(JSONInt(27))
+        assertTrue(basicOutput.valid)
+        assertNull(basicOutput.errors)
+    }
 
 }

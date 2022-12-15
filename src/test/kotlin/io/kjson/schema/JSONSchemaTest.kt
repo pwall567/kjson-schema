@@ -39,18 +39,19 @@ class JSONSchemaTest {
 
     @Test fun `should create true boolean schema`() {
         val schemaLocation = SchemaLocation(testURI)
-        val schema = JSONSchema.booleanSchema(true, schemaLocation)
-        assertIs<JSONSchema.TrueSchema>(schema)
+        val schema = JSONSchema.BooleanSchema(schemaLocation, true)
         expect(schemaLocation) { schema.location }
+        assertTrue(schema.value)
         val dummyRef = JSONRef(SampleData.sampleObject)
         assertTrue(schema.validate(dummyRef))
     }
 
     @Test fun `should create false boolean schema`() {
         val schemaLocation = SchemaLocation(testURI)
-        val schema = JSONSchema.booleanSchema(false, schemaLocation)
-        assertIs<JSONSchema.FalseSchema>(schema)
+        val schema = JSONSchema.BooleanSchema(schemaLocation, false)
+        assertIs<JSONSchema.BooleanSchema>(schema)
         expect(schemaLocation) { schema.location }
+        assertFalse(schema.value)
         val dummyRef = JSONRef(SampleData.sampleObject)
         assertFalse(schema.validate(dummyRef))
     }

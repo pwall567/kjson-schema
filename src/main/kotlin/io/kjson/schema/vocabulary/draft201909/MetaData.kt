@@ -28,6 +28,7 @@ package io.kjson.schema.vocabulary.draft201909
 import java.net.URI
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.Vocabulary
+import io.kjson.schema.handlers.AnnotationHandler
 import io.kjson.schema.handlers.UnimplementedKeywordHandler
 
 object MetaData : Vocabulary {
@@ -35,8 +36,8 @@ object MetaData : Vocabulary {
     override val id = URI("https://json-schema.org/draft/2019-09/vocab/meta-data")
 
     override fun findHandler(keyword: String): KeywordHandler? = when (keyword) {
-        "title" -> UnimplementedKeywordHandler // TODO
-        "description" -> UnimplementedKeywordHandler // TODO
+        "title" -> AnnotationHandler("title")
+        "description" -> AnnotationHandler("description")
         "default" -> UnimplementedKeywordHandler // TODO
         "deprecated" -> UnimplementedKeywordHandler // TODO
         "readOnly" -> UnimplementedKeywordHandler // TODO

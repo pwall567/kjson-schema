@@ -55,7 +55,7 @@ class SchemaDocument(
     val schemaDialect: SchemaDialect =
             if (json is JSONObject) SchemaDialect.findDialect(json) else SchemaDialect.latest()
 
-    var schema: JSONSchema = JSONSchema.TrueSchema(SchemaLocation(baseURI, JSONPointer.root))
+    var schema: JSONSchema = JSONSchema.BooleanSchema(SchemaLocation(baseURI, JSONPointer.root), true)
 
     companion object {
 

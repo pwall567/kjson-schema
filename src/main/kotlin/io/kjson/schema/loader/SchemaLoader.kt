@@ -86,9 +86,9 @@ class SchemaLoader private constructor(
     private fun preload(schemaDocument: SchemaDocument): SchemaDocument {
         schemaDocument.json.let { json ->
             if (json is JSONBoolean) {
-                schemaDocument.schema = JSONSchema.booleanSchema(
-                    booleanValue = json.value,
+                schemaDocument.schema = JSONSchema.BooleanSchema(
                     location = SchemaLocation(schemaDocument.baseURI, JSONPointer.root),
+                    value = json.value,
                 )
                 schemaDocument.state = SchemaDocument.State.PROCESSED
                 return schemaDocument
@@ -112,6 +112,7 @@ class SchemaLoader private constructor(
         if (schemaDocument.state == SchemaDocument.State.PROCESSED)
             return schemaDocument
         val loadContext = LoadContext(
+            schemaLoader = this,
             schemaDialect = schemaDocument.schemaDialect,
             schemaLocation = SchemaLocation(schemaDocument.baseURI, JSONPointer.root),
             ref = JSONRef(schemaDocument.json),
@@ -126,10 +127,11 @@ class SchemaLoader private constructor(
         return loadFromJSON(JSON.parse(string) ?: throw JSONSchemaException("JSON string was \"null\""))
     }
 
-    fun loadFromJSON(json: JSONValue): SchemaDocument {
-        val schemaDocument = SchemaDocument(json, null)
+    fun loadFromJSON(json: JSONValue, url: URL? = null): SchemaDocument {
+        val schemaDocument = SchemaDocument(json, url)
         preload(schemaDocument)
         val loadContext = LoadContext(
+            schemaLoader = this,
             schemaDialect = schemaDocument.schemaDialect,
             schemaLocation = SchemaLocation(schemaDocument.baseURI, JSONPointer.root),
             ref = JSONRef(json),
@@ -186,6 +188,7 @@ class SchemaLoader private constructor(
     }
 
     data class LoadContext(
+        val schemaLoader: SchemaLoader,
         val schemaDialect: SchemaDialect,
         val schemaLocation: SchemaLocation,
         val ref: JSONRef<*>,
@@ -193,7 +196,7 @@ class SchemaLoader private constructor(
 
         fun process(): JSONSchema {
             when (val node = ref.node) {
-                is JSONBoolean -> return JSONSchema.booleanSchema(node.value, schemaLocation)
+                is JSONBoolean -> return JSONSchema.BooleanSchema(schemaLocation, node.value)
                 is JSONObject -> {
                     val elements = mutableListOf<JSONSchema.Element>()
                     val objectRef = ref.asRef<JSONObject>()

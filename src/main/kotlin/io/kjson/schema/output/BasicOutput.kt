@@ -1,5 +1,5 @@
 /*
- * @(#) SchemaLocation.kt
+ * @(#) BasicOutput.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,30 +23,26 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema
+package io.kjson.schema.output
 
 import java.net.URI
-
 import io.kjson.pointer.JSONPointer
-import io.kjson.util.Util.withFragment
 
-data class SchemaLocation(
-    val uri: URI?,
-    val pointer: JSONPointer = JSONPointer.root,
+data class BasicOutput(
+    val valid: Boolean,
+    val errors: List<Entry>? = null,
 ) {
 
-    fun child(key: String) = SchemaLocation(uri, pointer.child(key))
-
-    fun child(index: Int) = SchemaLocation(uri, pointer.child(index))
-
-    override fun toString(): String = buildString {
-        uri?.let {
-            append(it.withFragment(null))
-        }
-        append('#')
-        append(pointer)
+    init {
+        if (!valid)
+            require(errors != null && errors.isNotEmpty())
     }
 
-    fun toAbsoluteKeywordLocation(): URI? = uri?.resolve("#${pointer.toURIFragment()}")
+    data class Entry(
+        val keywordLocation: JSONPointer,
+        val absoluteKeywordLocation: URI? = null,
+        val instanceLocation: JSONPointer,
+        val error: String,
+    )
 
 }
