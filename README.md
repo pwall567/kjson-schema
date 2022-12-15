@@ -6,3 +6,5 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-schema?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kjson%22%20AND%20a:%kjson-schema%22)
 
 Kotlin implementation of JSON Schema
+
+Work in progress; early stages

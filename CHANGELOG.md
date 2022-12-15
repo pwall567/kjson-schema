@@ -2,6 +2,6 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## [0.1] - 2022-12-16
 ### Added
-- all files: initial versions
+- all files: initial versions (very early stages)
