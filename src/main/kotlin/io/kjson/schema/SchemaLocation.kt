@@ -31,7 +31,7 @@ import io.kjson.pointer.JSONPointer
 import io.kjson.util.Util.withFragment
 
 data class SchemaLocation(
-    val uri: URI?,
+    val uri: URI?, // Must not include fragment (TODO check)
     val pointer: JSONPointer = JSONPointer.root,
 ) {
 
@@ -48,5 +48,11 @@ data class SchemaLocation(
     }
 
     fun toAbsoluteKeywordLocation(): URI? = uri?.resolve("#${pointer.toURIFragment()}")
+
+    companion object {
+
+        fun fromURI(uri: URI): SchemaLocation = SchemaLocation(uri.withFragment(null), JSONPointer(uri.fragment))
+
+    }
 
 }

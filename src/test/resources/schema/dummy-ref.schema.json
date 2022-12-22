@@ -1,0 +1,5 @@
+{
+  "$id": "http://example.com/test-ref",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "http://example.com/defs#/$defs/def1"
+}

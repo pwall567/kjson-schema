@@ -33,6 +33,7 @@ import io.kjson.schema.handlers.AnchorHandler
 import io.kjson.schema.handlers.CommentHandler
 import io.kjson.schema.handlers.DefsHandler
 import io.kjson.schema.handlers.NullKeywordHandler
+import io.kjson.schema.handlers.RefHandler
 
 object Core : Vocabulary {
 
@@ -42,7 +43,7 @@ object Core : Vocabulary {
         "\$id" -> NullKeywordHandler
         "\$schema" -> NullKeywordHandler
         "\$anchor" -> AnchorHandler
-        "\$ref" -> NullKeywordHandler
+        "\$ref" -> RefHandler
         "\$recursiveRef" -> NullKeywordHandler
         "\$recursiveAnchor" -> NullKeywordHandler
         "\$vocabulary" -> NullKeywordHandler

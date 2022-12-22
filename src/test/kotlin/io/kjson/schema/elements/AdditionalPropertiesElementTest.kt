@@ -31,10 +31,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.expect
+
 import java.net.URI
 import java.net.URL
-import io.kjson.JSONBoolean
 
+import io.kjson.JSONBoolean
 import io.kjson.JSONObject
 import io.kjson.pointer.JSONPointer
 import io.kjson.schema.loader.SchemaLoader
@@ -81,6 +82,11 @@ class AdditionalPropertiesElementTest {
     @Test fun `should return basic output for property validation error`() {
         val loader = SchemaLoader()
         val json = JSONObject.build {
+            add("properties", JSONObject.build {
+                add("bbb", JSONObject.build {
+                    add("maximum", 30)
+                })
+            })
             add("additionalProperties", JSONObject.build {
                 add("maximum", 25)
             })
@@ -89,6 +95,7 @@ class AdditionalPropertiesElementTest {
         val schema = schemaDocument.schema
         val instance = JSONObject.build {
             add("aaa", 26)
+            add("bbb", 26)
         }
         assertFalse(schema.validate(instance))
         val output = schema.getBasicOutput(instance)

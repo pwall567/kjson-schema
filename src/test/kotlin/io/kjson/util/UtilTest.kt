@@ -32,6 +32,7 @@ import kotlin.test.expect
 import java.net.URI
 
 import io.kjson.pointer.JSONPointer
+import io.kjson.util.Util.plural
 import io.kjson.util.Util.withFragment
 
 class UtilTest {
@@ -74,6 +75,22 @@ class UtilTest {
             expect("urn:uuid:b779e2d4-a529-11ec-8c4d-4f14ec374d69") { it.toString() }
             assertNull(it.fragment)
         }
+    }
+
+    @Test fun `should give correct plural for regular nouns`() {
+        expect("1 item") { plural(1, "item") }
+        expect("2 items") { plural(2, "item") }
+        expect("3 items") { plural(3, "item") }
+        expect("999 items") { plural(999, "item") }
+        expect("0 items") { plural(0, "item") }
+    }
+
+    @Test fun `should give correct plural for irregular nouns`() {
+        expect("1 property") { plural(1, "property", "properties") }
+        expect("2 properties") { plural(2, "property", "properties") }
+        expect("3 properties") { plural(3, "property", "properties") }
+        expect("999 properties") { plural(999, "property", "properties") }
+        expect("0 properties") { plural(0, "property", "properties") }
     }
 
 }

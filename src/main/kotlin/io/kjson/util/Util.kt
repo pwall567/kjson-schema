@@ -56,4 +56,21 @@ object Util {
         return false
     }
 
+    fun plural(n: Int, name: String) = buildString {
+        append(n)
+        append(' ')
+        append(name)
+        if (n != 1)
+            append('s')
+    }
+
+    fun plural(n: Int, name: String, pluralName: String) = buildString {
+        append(n)
+        append(' ')
+        if (n == 1)
+            append(name)
+        else
+            append(pluralName)
+    }
+
 }

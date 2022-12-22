@@ -56,6 +56,7 @@ class SchemaLoader private constructor(
     private val jsonLoader: JSONLoader,
     private val documentEntries: MutableList<SchemaDocument> = mutableListOf(),
     val idMappings: MutableMap<URI, IdMapping> = mutableMapOf(),
+    val schemaCache: MutableMap<SchemaLocation, JSONSchema> = mutableMapOf(),
 ) : Loader<SchemaDocument, SchemaLoader> {
 
     constructor(resourceFile: File = ResourceLoader.currentDirectory) : this(JSONLoader(resourceFile))
@@ -194,25 +195,23 @@ class SchemaLoader private constructor(
         val ref: JSONRef<*>,
     ) {
 
-        fun process(): JSONSchema {
-            when (val node = ref.node) {
-                is JSONBoolean -> return JSONSchema.BooleanSchema(schemaLocation, node.value)
-                is JSONObject -> {
-                    val elements = mutableListOf<JSONSchema.Element>()
-                    val objectRef = ref.asRef<JSONObject>()
-                    objectRef.forEachKey<JSONValue> {
-                        val handler = schemaDialect.findKeywordHandler(it)
-                        val loadContext = this@LoadContext.copy(
-                            schemaLocation = schemaLocation.child(it),
-                            ref = this,
-                        )
-                        handler.process(loadContext)?.let { element -> elements.add(element) }
-                    }
-                    return JSONSchema.ObjectSchema(schemaLocation, null, elements)
-                }
-                else -> log.fatal("Schema must be boolean or object - $schemaLocation")
-            }
-        }
+        fun process(): JSONSchema = when (val node = ref.node) {
+           is JSONBoolean -> JSONSchema.BooleanSchema(schemaLocation, node.value)
+           is JSONObject -> schemaLoader.schemaCache[schemaLocation] ?: run {
+               val elements = mutableListOf<JSONSchema.Element>()
+               val objectRef = ref.asRef<JSONObject>()
+               objectRef.forEachKey<JSONValue> {
+                   val handler = schemaDialect.findKeywordHandler(it)
+                   val loadContext = this@LoadContext.copy(
+                       schemaLocation = schemaLocation.child(it),
+                       ref = this,
+                   )
+                   handler.process(loadContext)?.let { element -> elements.add(element) }
+               }
+               JSONSchema.ObjectSchema(schemaLocation, null, elements)
+           }.also { schemaLoader.schemaCache[schemaLocation] = it }
+           else -> log.fatal("Schema must be boolean or object - $schemaLocation")
+       }
 
     }
 

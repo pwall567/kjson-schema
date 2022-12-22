@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) RefElement.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,35 +23,42 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema.handlers
+package io.kjson.schema.elements
 
-import io.kjson.JSONIncorrectTypeException
-import io.kjson.JSONObject
-import io.kjson.JSONValue
+import io.kjson.pointer.JSONPointer
+import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
-import io.kjson.schema.KeywordHandler
-import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
+import io.kjson.schema.SchemaLocation
+import io.kjson.schema.output.BasicOutput
+import io.kjson.schema.output.Output
 
-object DefsHandler : KeywordHandler {
+class RefElement(location: SchemaLocation, val target: JSONSchema) :
+        JSONSchema.Element(location) {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
-        }
-        return null
+    override val keyword: String = "\$ref"
+
+    override fun validate(parent: JSONSchema.ObjectSchema, instance: JSONRef<*>): Boolean = target.validate(instance)
+
+    override fun getBasicOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): BasicOutput = target.getBasicOutput(instance, relativeLocation) // .child("\$ref") ?
+
+    override fun getDetailedOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
+        TODO("Not yet implemented")
     }
 
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+    override fun getVerboseOutput(
+        parent: JSONSchema.ObjectSchema,
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+    ): Output {
+        TODO("Not yet implemented")
     }
 
 }

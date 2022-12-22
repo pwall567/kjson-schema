@@ -26,9 +26,14 @@
 package io.kjson.schema.vocabulary.draft202012
 
 import java.net.URI
+
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.Vocabulary
+import io.kjson.schema.handlers.MaxItemsHandler
+import io.kjson.schema.handlers.MaxPropertiesHandler
 import io.kjson.schema.handlers.MaximumHandler
+import io.kjson.schema.handlers.MinItemsHandler
+import io.kjson.schema.handlers.MinPropertiesHandler
 import io.kjson.schema.handlers.MinimumHandler
 import io.kjson.schema.handlers.RequiredHandler
 import io.kjson.schema.handlers.TypeHandler
@@ -50,13 +55,13 @@ object Validation : Vocabulary {
         "maxLength" -> UnimplementedKeywordHandler // TODO
         "minLength" -> UnimplementedKeywordHandler // TODO
         "pattern" -> UnimplementedKeywordHandler // TODO
-        "maxItems" -> UnimplementedKeywordHandler // TODO
-        "minItems" -> UnimplementedKeywordHandler // TODO
+        "maxItems" -> MaxItemsHandler
+        "minItems" -> MinItemsHandler
         "uniqueItems" -> UnimplementedKeywordHandler // TODO
         "maxContains" -> UnimplementedKeywordHandler // TODO
         "minContains" -> UnimplementedKeywordHandler // TODO
-        "maxProperties" -> UnimplementedKeywordHandler // TODO
-        "minProperties" -> UnimplementedKeywordHandler // TODO
+        "maxProperties" -> MaxPropertiesHandler
+        "minProperties" -> MinPropertiesHandler
         "required" -> RequiredHandler
         "dependentRequired" -> UnimplementedKeywordHandler // TODO
         else -> null

@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) MaxItemsElement.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -23,35 +23,25 @@
  * SOFTWARE.
  */
 
-package io.kjson.schema.handlers
+package io.kjson.schema.elements
 
-import io.kjson.JSONIncorrectTypeException
-import io.kjson.JSONObject
+import io.kjson.JSONArray
 import io.kjson.JSONValue
-import io.kjson.schema.JSONSchema
-import io.kjson.schema.KeywordHandler
-import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
+import io.kjson.schema.SchemaLocation
+import io.kjson.util.Util.plural
 
-object DefsHandler : KeywordHandler {
+class MaxItemsElement(location: SchemaLocation, limit: Int) : MinMaxElement(location, limit) {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
-        }
-        return null
-    }
+    override val keyword: String = "maxItems"
 
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+    override val relationship: String = "no more than"
+
+    override fun expected(n: Int): String = plural(limit, "item")
+
+    override fun correctType(node: JSONValue?): Boolean = node is JSONArray
+
+    override fun withinLimit(size: Int): Boolean {
+        return size <= limit
     }
 
 }

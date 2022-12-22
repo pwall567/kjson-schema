@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) ItemsHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -25,33 +25,19 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONIncorrectTypeException
-import io.kjson.JSONObject
-import io.kjson.JSONValue
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
+import io.kjson.schema.elements.ItemsElement
 import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
 
-object DefsHandler : KeywordHandler {
+object ItemsHandler : KeywordHandler {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
-        }
-        return null
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
+        return ItemsElement(loadContext.schemaLocation, loadContext.process()) // TODO check
     }
 
     override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+        preLoadContext.scan() // TODO check
     }
 
 }

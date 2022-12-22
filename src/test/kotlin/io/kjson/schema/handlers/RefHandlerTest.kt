@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) RefHandlerTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -25,33 +25,34 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONIncorrectTypeException
-import io.kjson.JSONObject
-import io.kjson.JSONValue
+import kotlin.test.Test
+import kotlin.test.assertIs
+import kotlin.test.expect
+import kotlin.test.fail
+
+import io.kjson.resource.ResourceLoader
 import io.kjson.schema.JSONSchema
-import io.kjson.schema.KeywordHandler
+import io.kjson.schema.elements.MaximumElement
+import io.kjson.schema.elements.RefElement
 import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
 
-object DefsHandler : KeywordHandler {
+class RefHandlerTest {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
-        }
-        return null
-    }
-
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+    @Test fun `should create ref element`() {
+        val loader = SchemaLoader(ResourceLoader.classPathURL("/schema/") ?: fail("Can't locate /schema"))
+        loader.preLoad("dummy-defs.schema.json")
+        val schemaDocument = loader.load("dummy-ref.schema.json")
+        val schema = schemaDocument.schema
+        assertIs<JSONSchema.ObjectSchema>(schema)
+        expect(1) { schema.elements.size }
+        val element = schema.elements[0]
+        assertIs<RefElement>(element)
+        val target = element.target
+        assertIs<JSONSchema.ObjectSchema>(target)
+        expect(1) { target.elements.size }
+        val targetElement = target.elements[0]
+        assertIs<MaximumElement>(targetElement)
+        expect(25) { targetElement.limit.toInt() }
     }
 
 }

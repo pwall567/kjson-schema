@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) DefsHandlerTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -25,33 +25,42 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONIncorrectTypeException
+import kotlin.test.Test
+import kotlin.test.assertIs
+import kotlin.test.expect
+
+import java.net.URI
+import java.net.URL
+
+import io.kjson.JSONInt
 import io.kjson.JSONObject
-import io.kjson.JSONValue
+import io.kjson.pointer.JSONPointer
 import io.kjson.schema.JSONSchema
-import io.kjson.schema.KeywordHandler
+import io.kjson.schema.SchemaLocation
+import io.kjson.schema.elements.MaximumElement
 import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
 
-object DefsHandler : KeywordHandler {
+class DefsHandlerTest {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
+    @Test fun `should create defs element`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("\$defs", JSONObject.build {
+                add("def1", JSONObject.build {
+                    add("maximum", 25)
+                })
+            })
         }
-        return null
-    }
-
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+        val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
+        val schema = schemaDocument.schema
+        assertIs<JSONSchema.ObjectSchema>(schema)
+        expect(0) { schema.elements.size }
+        val cachedSchema = loader.schemaCache[SchemaLocation(URI("https://example.com/schema"), JSONPointer("/\$defs/def1"))]
+        assertIs<JSONSchema.ObjectSchema>(cachedSchema)
+        expect(1) { cachedSchema.elements.size }
+        val element = cachedSchema.elements[0]
+        assertIs<MaximumElement>(element)
+        expect(JSONInt(25)) { element.limit }
     }
 
 }

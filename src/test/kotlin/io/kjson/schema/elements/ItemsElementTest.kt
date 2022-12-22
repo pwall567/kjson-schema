@@ -1,5 +1,5 @@
 /*
- * @(#) MaximumElementTest.kt
+ * @(#) ItemsElementTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -35,40 +35,58 @@ import kotlin.test.expect
 import java.net.URI
 import java.net.URL
 
-import io.kjson.JSONInt
+import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.pointer.JSONPointer
 import io.kjson.schema.loader.SchemaLoader
 
-class MaximumElementTest {
+class ItemsElementTest {
 
-    @Test fun `should validate number less than or equal to maximum`() {
+    @Test fun `should validate array items`() {
         val loader = SchemaLoader()
         val json = JSONObject.build {
-            add("maximum", 42)
+            add("items", JSONObject.build {
+                add("maximum", 42)
+            })
         }
         val schemaDocument = loader.loadFromJSON(json)
         val schema = schemaDocument.schema
-        assertTrue(schema.validate(JSONInt(27)))
-        assertFalse(schema.validate(JSONInt(54)))
+        JSONArray.build {
+            add(24)
+            add(30)
+        }.let { assertTrue(schema.validate(it)) }
+        JSONArray.build {
+            add(24)
+            add(50)
+        }.let { assertFalse(schema.validate(it)) }
     }
 
-    @Test fun `should return basic output for number less than maximum`() {
+    @Test fun `should return Basic output for array validation`() {
         val loader = SchemaLoader()
         val json = JSONObject.build {
-            add("maximum", 42)
+            add("items", JSONObject.build {
+                add("maximum", 42)
+            })
         }
         val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
         val schema = schemaDocument.schema
-        schema.getBasicOutput(JSONInt(27)).let {
+        val goodArray = JSONArray.build {
+            add(24)
+            add(30)
+        }
+        schema.getBasicOutput(goodArray).let {
             assertTrue(it.valid)
             assertNull(it.errors)
         }
-        schema.getBasicOutput(JSONInt(54)).let {
+        val badArray = JSONArray.build {
+            add(24)
+            add(50)
+        }
+        schema.getBasicOutput(badArray).let {
             assertFalse(it.valid)
             val outputErrors = it.errors
             assertNotNull(outputErrors)
-            expect(2) { outputErrors.size }
+            expect(3) { outputErrors.size }
             with(outputErrors[0]) {
                 expect(JSONPointer.root) { keywordLocation }
                 expect(URI("https://example.com/schema#")) { absoluteKeywordLocation }
@@ -76,10 +94,16 @@ class MaximumElementTest {
                 expect("A subschema had errors") { error }
             }
             with(outputErrors[1]) {
-                expect(JSONPointer("/maximum")) { keywordLocation }
-                expect(URI("https://example.com/schema#/maximum")) { absoluteKeywordLocation }
-                expect(JSONPointer.root) { instanceLocation }
-                expect("Number > maximum 42, was 54") { error }
+                expect(JSONPointer("/items")) { keywordLocation }
+                expect(URI("https://example.com/schema#/items")) { absoluteKeywordLocation }
+                expect(JSONPointer("/1")) { instanceLocation }
+                expect("A subschema had errors") { error }
+            }
+            with(outputErrors[2]) {
+                expect(JSONPointer("/items/maximum")) { keywordLocation }
+                expect(URI("https://example.com/schema#/items/maximum")) { absoluteKeywordLocation }
+                expect(JSONPointer("/1")) { instanceLocation }
+                expect("Number > maximum 42, was 50") { error }
             }
         }
     }

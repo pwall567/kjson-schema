@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) RefHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -26,32 +26,36 @@
 package io.kjson.schema.handlers
 
 import io.kjson.JSONIncorrectTypeException
-import io.kjson.JSONObject
-import io.kjson.JSONValue
+import io.kjson.JSONString
+import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
+import io.kjson.schema.JSONSchemaException.Companion.fatal
+import io.kjson.schema.SchemaLocation
+import io.kjson.schema.elements.RefElement
+import io.kjson.util.Util.resolve
+import net.pwall.log.getLogger
 
-object DefsHandler : KeywordHandler {
+object RefHandler : KeywordHandler {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
+    val log = getLogger()
+
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
         val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
-        }
-        return null
-    }
-
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+        if (!ref.isRef<JSONString>())
+            throw JSONIncorrectTypeException("\$ref", "JSONString", ref.node, loadContext.schemaLocation)
+        val refValue = ref.asRef<JSONString>().node.value
+        val resolved = loadContext.schemaLocation.uri.resolve(refValue)
+//        val uri = loadContext.schemaLoader.resolve(refValue).resourceURL.toURI()
+//        val json = loadContext.schemaLoader.locate(uri) ?: log.fatal("Can't locate \$ref URI - $uri")
+        val json = loadContext.schemaLoader.locate(resolved) ?: log.fatal("Can't locate \$ref URI - $resolved")
+        val schema = loadContext.copy(
+//            schemaLocation = SchemaLocation.fromURI(uri),
+            schemaLocation = SchemaLocation.fromURI(resolved),
+            ref = JSONRef(json),
+        ).process()
+        return RefElement(loadContext.schemaLocation, schema)
     }
 
 }

@@ -33,6 +33,7 @@ import io.kjson.schema.handlers.AnchorHandler
 import io.kjson.schema.handlers.CommentHandler
 import io.kjson.schema.handlers.DefsHandler
 import io.kjson.schema.handlers.NullKeywordHandler
+import io.kjson.schema.handlers.RefHandler
 
 object Core : Vocabulary {
 
@@ -41,7 +42,7 @@ object Core : Vocabulary {
     override fun findHandler(keyword: String): KeywordHandler? = when (keyword) {
         "\$id" -> NullKeywordHandler
         "\$schema" -> NullKeywordHandler
-        "\$ref" -> NullKeywordHandler
+        "\$ref" -> RefHandler
         "\$anchor" -> AnchorHandler
         "\$dynamicRef" -> NullKeywordHandler
         "\$dynamicAnchor" -> NullKeywordHandler

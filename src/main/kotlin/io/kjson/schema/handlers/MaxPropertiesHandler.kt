@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) MaxPropertiesHandler.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -25,33 +25,24 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONIncorrectTypeException
-import io.kjson.JSONObject
-import io.kjson.JSONValue
+import io.kjson.JSON.asInt
+import io.kjson.JSONNumber
 import io.kjson.schema.JSONSchema
+import io.kjson.schema.JSONSchemaException.Companion.fatal
 import io.kjson.schema.KeywordHandler
+import io.kjson.schema.elements.MaxPropertiesElement
 import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
+import net.pwall.log.getLogger
 
-object DefsHandler : KeywordHandler {
+object MaxPropertiesHandler : KeywordHandler {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
-        }
-        return null
-    }
+    private val log = getLogger()
 
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
-        }
+    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element {
+        val node = loadContext.ref.node
+        if (!(node is JSONNumber && node.isIntegral()))
+            log.fatal("maximum value must be integer") // TODO add ", was xxxx" ?
+        return MaxPropertiesElement(loadContext.schemaLocation, node.asInt)
     }
 
 }

@@ -30,6 +30,7 @@ import java.net.URI
 import io.kjson.schema.KeywordHandler
 import io.kjson.schema.Vocabulary
 import io.kjson.schema.handlers.AdditionalPropertiesHandler
+import io.kjson.schema.handlers.ItemsHandler
 import io.kjson.schema.handlers.NullKeywordHandler
 import io.kjson.schema.handlers.PatternPropertiesHandler
 import io.kjson.schema.handlers.PropertiesHandler
@@ -40,7 +41,7 @@ object Applicator : Vocabulary {
 
     override fun findHandler(keyword: String): KeywordHandler? = when (keyword) {
         "prefixItems" -> NullKeywordHandler // TODO pre-scan should examine schemata
-        "items" -> NullKeywordHandler // TODO pre-scan should examine schema
+        "items" -> ItemsHandler
         "contains" -> NullKeywordHandler // TODO pre-scan should examine schema???
         "additionalProperties" -> AdditionalPropertiesHandler
         "properties" -> PropertiesHandler

@@ -1,5 +1,5 @@
 /*
- * @(#) DefsHandler.kt
+ * @(#) PatternPropertiesHandlerTest.kt
  *
  * kjson-schema  Kotlin implementation of JSON Schema
  * Copyright (c) 2022 Peter Wall
@@ -25,32 +25,42 @@
 
 package io.kjson.schema.handlers
 
-import io.kjson.JSONIncorrectTypeException
+import kotlin.test.Test
+import kotlin.test.assertIs
+import kotlin.test.expect
+
+import io.kjson.JSONInt
 import io.kjson.JSONObject
-import io.kjson.JSONValue
 import io.kjson.schema.JSONSchema
-import io.kjson.schema.KeywordHandler
+import io.kjson.schema.elements.MaximumElement
+import io.kjson.schema.elements.PatternPropertiesElement
 import io.kjson.schema.loader.SchemaLoader
-import io.kjson.pointer.forEachKey
 
-object DefsHandler : KeywordHandler {
+class PatternPropertiesHandlerTest {
 
-    override fun process(loadContext: SchemaLoader.LoadContext): JSONSchema.Element? {
-        val ref = loadContext.ref
-        if (!ref.isRef<JSONObject>())
-            throw JSONIncorrectTypeException("properties", "JSONObject", ref.node, loadContext.schemaLocation)
-        ref.asRef<JSONObject>().forEachKey<JSONValue?> {
-            loadContext.copy(
-                schemaLocation = loadContext.schemaLocation.child(it),
-                ref = this,
-            ).process()
+    @Test fun `should create properties element`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("patternProperties", JSONObject.build {
+                add("^[a-z]{1,9}$", JSONObject.build {
+                    add("maximum", 25)
+                })
+            })
         }
-        return null
-    }
-
-    override fun preScan(preLoadContext: SchemaLoader.PreLoadContext) {
-        preLoadContext.ref.asRef<JSONObject>().forEachKey<JSONValue> {
-            preLoadContext.copy(ref = this).scan()
+        val schemaDocument = loader.loadFromJSON(json)
+        val schema = schemaDocument.schema
+        assertIs<JSONSchema.ObjectSchema>(schema)
+        val element = schema.elements[0]
+        assertIs<PatternPropertiesElement>(element)
+        val properties = element.properties
+        expect(1) { properties.size }
+        with(properties[0]) {
+            expect("^[a-z]{1,9}$") { first.toString() }
+            val nestedSchema = second
+            assertIs<JSONSchema.ObjectSchema>(nestedSchema)
+            val nestedElement = nestedSchema.elements[0]
+            assertIs<MaximumElement>(nestedElement)
+            expect(JSONInt(25)) { nestedElement.limit }
         }
     }
 
