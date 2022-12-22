@@ -82,7 +82,12 @@ sealed class JSONSchema(location: SchemaLocation) : JSONSchemaNode(location) {
         }
 
         override fun getDetailedOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
-            TODO("Not yet implemented")
+            return createOutput(
+                valid = value,
+                instance = instance,
+                relativeLocation = relativeLocation,
+                error = if (value) null else "false",
+            )
         }
 
         override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
@@ -139,7 +144,16 @@ sealed class JSONSchema(location: SchemaLocation) : JSONSchemaNode(location) {
         }
 
         override fun getDetailedOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
-            TODO("Not yet implemented")
+            // TODO review this as well
+            val errors = mutableListOf<Output>()
+            for (element in elements) {
+                val childLocation = relativeLocation.child(element.keyword)
+                element.getDetailedOutput(this, instance, childLocation).let {
+                    if (!it.valid)
+                        errors.add(it)
+                }
+            }
+            return createDetailedOutput(instance, relativeLocation, errors)
         }
 
         override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {

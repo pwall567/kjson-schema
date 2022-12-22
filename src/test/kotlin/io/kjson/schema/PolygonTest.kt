@@ -91,4 +91,51 @@ class PolygonTest {
         }
     }
 
+    @Test fun `should give correct Detailed result from Polygon test`() {
+        val loader = SchemaLoader(ResourceLoader.classPathURL("/schema/") ?: fail("Can't locate /schema"))
+        val schemaDocument = loader.load("polygon.schema.json")
+        val jsonLoader = JSONLoader(ResourceLoader.classPathURL("/json/") ?: fail("Can't locate /json"))
+        val json = jsonLoader.load("polygon.json")
+        val output = schemaDocument.schema.getDetailedOutput(json)
+        output.errors?.forEach {
+            println(it)
+        }
+        assertFalse(output.valid)
+        val outputErrors = output.errors
+        assertNotNull(outputErrors)
+        expect(2) { outputErrors.size }
+        with(outputErrors[0]) {
+            assertFalse { valid }
+            expect(JSONPointer("/items/\$ref")) { keywordLocation }
+            expect(URI("https://example.com/polygon#/\$defs/point")) { absoluteKeywordLocation }
+            expect(JSONPointer("/1")) { instanceLocation }
+            val nestedErrors = errors
+            assertNotNull(nestedErrors)
+            expect(2) { nestedErrors.size }
+            with(nestedErrors[0]) {
+                assertFalse { valid }
+                expect(JSONPointer("/items/\$ref/additionalProperties")) { keywordLocation }
+                expect(URI("https://example.com/polygon#/\$defs/point/additionalProperties")) {
+                    absoluteKeywordLocation
+                }
+                expect(JSONPointer("/1/z")) { instanceLocation }
+                expect("Additional property 'z' found but was invalid") { error }
+            }
+            with(nestedErrors[1]) {
+                assertFalse { valid }
+                expect(JSONPointer("/items/\$ref/required")) { keywordLocation }
+                expect(URI("https://example.com/polygon#/\$defs/point/required")) { absoluteKeywordLocation }
+                expect(JSONPointer("/1")) { instanceLocation }
+                expect("Required property 'y' not found") { error }
+            }
+        }
+        with(outputErrors[1]) {
+            assertFalse { valid }
+            expect(JSONPointer("/minItems")) { keywordLocation }
+            expect(URI("https://example.com/polygon#/minItems")) { absoluteKeywordLocation }
+            expect(JSONPointer.root) { instanceLocation }
+            expect("Expected at least 3 items but found 2") { error }
+        }
+    }
+
 }

@@ -47,9 +47,7 @@ class AnnotationElement(override val keyword: String, val value: String, locatio
         parent: JSONSchema.ObjectSchema,
         instance: JSONRef<*>,
         relativeLocation: JSONPointer,
-    ): Output {
-        TODO("Not yet implemented")
-    }
+    ): Output = createValidOutput(instance, relativeLocation)
 
     override fun getVerboseOutput(
         parent: JSONSchema.ObjectSchema,

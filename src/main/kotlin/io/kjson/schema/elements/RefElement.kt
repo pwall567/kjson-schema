@@ -49,9 +49,7 @@ class RefElement(location: SchemaLocation, val target: JSONSchema) :
         parent: JSONSchema.ObjectSchema,
         instance: JSONRef<*>,
         relativeLocation: JSONPointer,
-    ): Output {
-        TODO("Not yet implemented")
-    }
+    ): Output = target.getDetailedOutput(instance, relativeLocation)
 
     override fun getVerboseOutput(
         parent: JSONSchema.ObjectSchema,

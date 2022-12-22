@@ -42,7 +42,7 @@ import io.kjson.schema.loader.SchemaLoader
 
 class AdditionalPropertiesElementTest {
 
-    @Test fun `should validate property of object`() {
+    @Test fun `should validate additional property of object`() {
         val loader = SchemaLoader()
         val json = JSONObject.build {
             add("additionalProperties", JSONObject.build {
@@ -61,7 +61,7 @@ class AdditionalPropertiesElementTest {
         assertFalse(schema.validate(instance2))
     }
 
-    @Test fun `should return basic output for property validation`() {
+    @Test fun `should return basic output for additional property validation`() {
         val loader = SchemaLoader()
         val json = JSONObject.build {
             add("additionalProperties", JSONObject.build {
@@ -79,7 +79,7 @@ class AdditionalPropertiesElementTest {
         assertNull(output.errors)
     }
 
-    @Test fun `should return basic output for property validation error`() {
+    @Test fun `should return basic output for additional property validation error`() {
         val loader = SchemaLoader()
         val json = JSONObject.build {
             add("properties", JSONObject.build {
@@ -157,6 +157,24 @@ class AdditionalPropertiesElementTest {
             expect(JSONPointer("/aaa")) { instanceLocation }
             expect("Additional property 'aaa' found but was invalid") { error }
         }
+    }
+
+    @Test fun `should return detailed output for additional property validation`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("additionalProperties", JSONObject.build {
+                add("maximum", 25)
+            })
+        }
+        val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
+        val schema = schemaDocument.schema
+        val instance = JSONObject.build {
+            add("aaa", 24)
+        }
+        assertTrue(schema.validate(instance))
+        val output = schema.getDetailedOutput(instance)
+        assertTrue(output.valid)
+        assertNull(output.errors)
     }
 
 }

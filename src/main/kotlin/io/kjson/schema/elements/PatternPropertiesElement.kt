@@ -81,7 +81,18 @@ class PatternPropertiesElement(location: SchemaLocation, val properties: List<Pa
     ): Output {
         if (!instance.isRef<JSONObject>())
             return createValidOutput(instance, relativeLocation)
-        TODO("Not yet implemented")
+        val refObject = instance.asRef<JSONObject>()
+        val errors = mutableListOf<Output>()
+        for ((propertyRegex, propertySchema) in properties) {
+            refObject.forEachKey<JSONValue?> {
+                if (propertyRegex.containsMatchIn(it)) {
+                    val propertyResult = propertySchema.getDetailedOutput(this, relativeLocation.child(it))
+                    if (!propertyResult.valid)
+                        errors.add(propertyResult)
+                }
+            }
+        }
+        return createDetailedOutput(instance, relativeLocation, errors)
     }
 
     override fun getVerboseOutput(

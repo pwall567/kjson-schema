@@ -75,7 +75,15 @@ class RequiredElement(location: SchemaLocation, val propertyNames: List<String>)
         instance: JSONRef<*>,
         relativeLocation: JSONPointer,
     ): Output {
-        TODO("Not yet implemented")
+        if (!instance.isRef<JSONObject>())
+            return createValidOutput(instance, relativeLocation)
+        val errors = mutableListOf<Output>()
+        val objectRef = instance.asRef<JSONObject>()
+        for (propertyName in propertyNames) {
+            if (!objectRef.hasChild<JSONValue?>(propertyName))
+                errors.add(createErrorOutput(instance, relativeLocation, "Required property '$propertyName' not found"))
+        }
+        return createDetailedOutput(instance, relativeLocation, errors)
     }
 
     override fun getVerboseOutput(

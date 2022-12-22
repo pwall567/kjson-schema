@@ -101,7 +101,19 @@ class AdditionalPropertiesElement(location: SchemaLocation, val schema: JSONSche
     ): Output {
         if (!instance.isRef<JSONObject>())
             return createValidOutput(instance, relativeLocation)
-        TODO("Not yet implemented")
+        val refObject = instance.asRef<JSONObject>()
+        val errors = mutableListOf<Output>()
+        refObject.forEachKey<JSONValue?> {
+            if (!inProperties(parent, it) && !inPatternProperties(parent, it)) {
+                val result = schema.getDetailedOutput(this, relativeLocation)
+                if (!result.valid) {
+                    errors.add(createErrorOutput(this, relativeLocation,
+                            "Additional property '$it' found but was invalid"))
+                    result.errors?.let { e -> errors.addAll(e) } // ?????
+                }
+            }
+        }
+        return createDetailedOutput(instance, relativeLocation, errors)
     }
 
     override fun getVerboseOutput(

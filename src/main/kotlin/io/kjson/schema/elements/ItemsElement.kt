@@ -77,9 +77,15 @@ class ItemsElement(location: SchemaLocation, val schema: JSONSchema) : JSONSchem
         instance: JSONRef<*>,
         relativeLocation: JSONPointer,
     ): Output {
-        if (!instance.isRef<JSONObject>())
+        if (!instance.isRef<JSONArray>())
             return createValidOutput(instance, relativeLocation)
-        TODO("Not yet implemented")
+        val errors = mutableListOf<Output>()
+        instance.asRef<JSONArray>().forEach<JSONValue?> {
+            val result = schema.getDetailedOutput(this, relativeLocation)
+            if (!result.valid)
+                errors.add(result)
+        }
+        return createDetailedOutput(instance, relativeLocation, errors)
     }
 
     override fun getVerboseOutput(
@@ -87,7 +93,7 @@ class ItemsElement(location: SchemaLocation, val schema: JSONSchema) : JSONSchem
         instance: JSONRef<*>,
         relativeLocation: JSONPointer,
     ): Output {
-        if (!instance.isRef<JSONObject>())
+        if (!instance.isRef<JSONArray>())
             return createValidOutput(instance, relativeLocation)
         TODO("Not yet implemented")
     }

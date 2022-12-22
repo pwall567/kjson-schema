@@ -28,14 +28,11 @@ package io.kjson.schema.elements
 import io.kjson.JSON.asArray
 import io.kjson.JSONStructure
 import io.kjson.JSONValue
-import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.SchemaLocation
-import io.kjson.schema.output.BasicOutput
-import io.kjson.schema.output.Output
 
-abstract class MinMaxElement(location: SchemaLocation, val limit: Int) : JSONSchema.Element(location) {
+abstract class MinMaxElement(location: SchemaLocation, val limit: Int) : AbstractElement(location) {
 
     abstract val relationship: String
 
@@ -51,30 +48,8 @@ abstract class MinMaxElement(location: SchemaLocation, val limit: Int) : JSONSch
         return withinLimit(instance.asRef<JSONStructure<*>>().node.size)
     }
 
-    override fun getBasicOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer
-    ): BasicOutput = if (validate(parent, instance))
-        BasicOutput(valid = true)
-    else
-        createBasicErrorOutput(instance, relativeLocation,
-                "Expected $relationship ${expected(limit)} but found ${instance.node.asArray.size}")
-
-    override fun getDetailedOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer
-    ): Output {
-        TODO("Not yet implemented")
-    }
-
-    override fun getVerboseOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer
-    ): Output {
-        TODO("Not yet implemented")
+    override fun getErrorMessage(instance: JSONRef<*>): String {
+        return "Expected $relationship ${expected(limit)} but found ${instance.node.asArray.size}"
     }
 
 }

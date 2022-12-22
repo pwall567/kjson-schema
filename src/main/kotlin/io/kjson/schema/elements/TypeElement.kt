@@ -34,14 +34,11 @@ import io.kjson.JSONNumber
 import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONValue
-import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.SchemaLocation
-import io.kjson.schema.output.BasicOutput
-import io.kjson.schema.output.Output
 
-class TypeElement(location: SchemaLocation, val types: List<JSONSchema.Type>) : JSONSchema.Element(location) {
+class TypeElement(location: SchemaLocation, val types: List<JSONSchema.Type>) : AbstractElement(location) {
 
     override val keyword: String = "type"
 
@@ -61,32 +58,9 @@ class TypeElement(location: SchemaLocation, val types: List<JSONSchema.Type>) : 
         return false
     }
 
-    override fun getBasicOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ): BasicOutput =
-        if (validate(parent, instance))
-            BasicOutput(valid = true)
-        else
-            createBasicErrorOutput(instance, relativeLocation,
-                "Incorrect type, expected ${types.joinToString(separator = " or ") { it.value }}" +
-                        " but was ${instance.node.typeName}")
-
-    override fun getDetailedOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ): Output {
-        TODO("Not yet implemented")
-    }
-
-    override fun getVerboseOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ): Output {
-        TODO("Not yet implemented")
+    override fun getErrorMessage(instance: JSONRef<*>): String {
+        return "Incorrect type, expected ${types.joinToString(separator = " or ") { it.value }}" +
+                " but was ${instance.node.typeName}"
     }
 
     companion object {

@@ -31,14 +31,11 @@ import io.kjson.JSONDecimal
 import io.kjson.JSONInt
 import io.kjson.JSONLong
 import io.kjson.JSONNumber
-import io.kjson.pointer.JSONPointer
 import io.kjson.pointer.JSONRef
 import io.kjson.schema.JSONSchema
 import io.kjson.schema.SchemaLocation
-import io.kjson.schema.output.BasicOutput
-import io.kjson.schema.output.Output
 
-abstract class NumberComparisonElement(location: SchemaLocation, val limit: JSONNumber) : JSONSchema.Element(location) {
+abstract class NumberComparisonElement(location: SchemaLocation, val limit: JSONNumber) : AbstractElement(location) {
 
     override fun validate(parent: JSONSchema.ObjectSchema, instance: JSONRef<*>): Boolean =
         when (val value = instance.node) {
@@ -74,29 +71,6 @@ abstract class NumberComparisonElement(location: SchemaLocation, val limit: JSON
 
     abstract fun getErrorString(): String
 
-    override fun getBasicOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ): BasicOutput = if (validate(parent, instance))
-        BasicOutput(valid = true)
-    else
-        createBasicErrorOutput(instance, relativeLocation, "${getErrorString()}, was ${instance.node}")
-
-    override fun getDetailedOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ): Output {
-        TODO()
-    }
-
-    override fun getVerboseOutput(
-        parent: JSONSchema.ObjectSchema,
-        instance: JSONRef<*>,
-        relativeLocation: JSONPointer,
-    ): Output {
-        TODO()
-    }
+    override fun getErrorMessage(instance: JSONRef<*>): String = "${getErrorString()}, was ${instance.node}"
 
 }

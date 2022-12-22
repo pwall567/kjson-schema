@@ -101,4 +101,19 @@ abstract class JSONSchemaNode(val location: SchemaLocation) {
         annotation: String? = null,
     ) = createOutput(true, instance, relativeLocation, annotation = annotation)
 
+    fun createDetailedOutput(
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+        errors: List<Output>,
+    ): Output = when (errors.size) {
+        0 -> createValidOutput(instance, relativeLocation)
+        1 -> errors[0]
+        else -> createOutput(
+            valid = false,
+            instance = instance,
+            relativeLocation = relativeLocation,
+            errors = errors,
+        )
+    }
+
 }
