@@ -37,12 +37,12 @@ data class Output(
     val error: String? = null,
     val errors: List<Output>? = null,
     val annotation: String? = null,
-    val annotations: List<Output>? = null
+    val annotations: List<Output>? = null,
 ) {
 
     init {
         if (!valid) {
-            require(error != null || errors != null)
+//            require(error != null || errors != null) // false boolean schema has no error message
             require(annotation == null && annotations == null) // https://json-schema.org/draft/2020-12/json-schema-core.html#section-7.7.1.2
         }
     }

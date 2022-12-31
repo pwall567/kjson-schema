@@ -109,7 +109,8 @@ class AdditionalPropertiesElement(location: SchemaLocation, val schema: JSONSche
                 if (!result.valid) {
                     errors.add(createErrorOutput(this, relativeLocation,
                             "Additional property '$it' found but was invalid"))
-                    result.errors?.let { e -> errors.addAll(e) } // ?????
+                    if (result.error != null || result.errors != null)
+                        errors.add(result)
                 }
             }
         }
@@ -122,8 +123,18 @@ class AdditionalPropertiesElement(location: SchemaLocation, val schema: JSONSche
         relativeLocation: JSONPointer,
     ): Output {
         if (!instance.isRef<JSONObject>())
-            return createValidOutput(instance, relativeLocation)
-        TODO("Not yet implemented")
+            return createValidOutput(
+                instance = instance,
+                relativeLocation = relativeLocation,
+                annotation = "additionalProperties",
+            )
+        val refObject = instance.asRef<JSONObject>()
+        val results = mutableListOf<Output>()
+        refObject.forEachKey<JSONValue?> {
+            if (!inProperties(parent, it) && !inPatternProperties(parent, it))
+                results.add(schema.getVerboseOutput(this, relativeLocation))
+        }
+        return createVerboseOutput(instance, relativeLocation, results, keyword)
     }
 
 }

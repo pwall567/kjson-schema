@@ -108,4 +108,37 @@ class ItemsElementTest {
         }
     }
 
+    @Test fun `should return detailed output for array validation`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("items", JSONObject.build {
+                add("maximum", 42)
+            })
+        }
+        val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
+        val schema = schemaDocument.schema
+        val goodArray = JSONArray.build {
+            add(24)
+            add(30)
+        }
+        schema.getDetailedOutput(goodArray).let {
+            assertTrue(it.valid)
+            assertNull(it.error)
+            assertNull(it.errors)
+        }
+        val badArray = JSONArray.build {
+            add(24)
+            add(50)
+        }
+        schema.getDetailedOutput(badArray).let {
+            // this is an example of "Nodes that have a single child are replaced by the child."
+            // https://json-schema.org/draft/2020-12/json-schema-core.html#section-12.4.3
+            assertFalse(it.valid)
+            expect(JSONPointer("/items/maximum")) { it.keywordLocation }
+            expect(URI("https://example.com/schema#/items/maximum")) { it.absoluteKeywordLocation }
+            expect(JSONPointer("/1")) { it.instanceLocation }
+            expect("Number > maximum 42, was 50") { it.error }
+        }
+    }
+
 }

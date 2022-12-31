@@ -39,6 +39,7 @@ abstract class JSONSchemaNode(val location: SchemaLocation) {
         error: String? = null,
         errors: List<Output>? = null,
         annotation: String? = null,
+        annotations: List<Output>? = null,
     ) = Output(
         valid = valid,
         keywordLocation = relativeLocation,
@@ -47,12 +48,21 @@ abstract class JSONSchemaNode(val location: SchemaLocation) {
         error = error,
         errors = errors,
         annotation = annotation,
+        annotations = annotations,
     )
 
     fun createValidOutput(
         instance: JSONRef<*>,
         relativeLocation: JSONPointer,
-    ) = createOutput(true, instance, relativeLocation)
+        annotation: String? = null,
+        annotations: List<Output>? = null,
+    ) = createOutput(
+        valid = true,
+        instance = instance,
+        relativeLocation = relativeLocation,
+        annotation = annotation,
+        annotations = annotations,
+    )
 
     fun createBasicErrorOutput(
         instance: JSONRef<*>,
@@ -114,6 +124,30 @@ abstract class JSONSchemaNode(val location: SchemaLocation) {
             relativeLocation = relativeLocation,
             errors = errors,
         )
+    }
+
+    fun createVerboseOutput(
+        instance: JSONRef<*>,
+        relativeLocation: JSONPointer,
+        results: List<Output>,
+        keyword: String? = null,
+    ): Output {
+        println("createVerboseOutput(instance=$instance,relativeLocation=$relativeLocation,results=$results,keyword=$keyword)")
+        return if (results.any { !it.valid })
+            createOutput(
+                valid = false,
+                instance = instance,
+                relativeLocation = relativeLocation,
+                errors = results,
+            )
+        else
+            createOutput(
+                valid = true,
+                instance = instance,
+                relativeLocation = relativeLocation,
+                annotations = results,
+                annotation = if (results.isEmpty()) keyword else null,
+            )
     }
 
 }

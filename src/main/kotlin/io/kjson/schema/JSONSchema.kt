@@ -86,12 +86,18 @@ sealed class JSONSchema(location: SchemaLocation) : JSONSchemaNode(location) {
                 valid = value,
                 instance = instance,
                 relativeLocation = relativeLocation,
-                error = if (value) null else "false",
+                error = null,
             )
         }
 
         override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
-            TODO("Not yet implemented")
+            return createOutput(
+                valid = value,
+                instance = instance,
+                relativeLocation = relativeLocation,
+                error = null,
+                annotation = value.toString(),
+            )
         }
 
     }
@@ -157,7 +163,12 @@ sealed class JSONSchema(location: SchemaLocation) : JSONSchemaNode(location) {
         }
 
         override fun getVerboseOutput(instance: JSONRef<*>, relativeLocation: JSONPointer): Output {
-            TODO("Not yet implemented")
+            val results = mutableListOf<Output>()
+            for (element in elements) {
+                val childLocation = relativeLocation.child(element.keyword)
+                results.add(element.getVerboseOutput(this, instance, childLocation))
+            }
+            return createVerboseOutput(instance, relativeLocation, results)
         }
 
     }

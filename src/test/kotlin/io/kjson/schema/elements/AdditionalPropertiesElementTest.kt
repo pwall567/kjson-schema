@@ -177,4 +177,130 @@ class AdditionalPropertiesElementTest {
         assertNull(output.errors)
     }
 
+    @Test fun `should return detailed output for additional property validation error`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("properties", JSONObject.build {
+                add("bbb", JSONObject.build {
+                    add("maximum", 30)
+                })
+            })
+            add("additionalProperties", JSONObject.build {
+                add("maximum", 25)
+            })
+        }
+        val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
+        val schema = schemaDocument.schema
+        val instance = JSONObject.build {
+            add("aaa", 26)
+            add("bbb", 26)
+        }
+        assertFalse(schema.validate(instance))
+        val output = schema.getDetailedOutput(instance)
+        assertFalse(output.valid)
+        expect(JSONPointer("/additionalProperties")) { output.keywordLocation }
+        expect(URI("https://example.com/schema#/additionalProperties")) { output.absoluteKeywordLocation }
+        expect(JSONPointer.root) { output.instanceLocation }
+        val outputErrors = output.errors
+        assertNotNull(outputErrors)
+        expect(2) { outputErrors.size }
+        with(outputErrors[0]) {
+            assertFalse(valid)
+            expect(JSONPointer("/additionalProperties")) { keywordLocation }
+            expect(URI("https://example.com/schema#/additionalProperties")) { absoluteKeywordLocation }
+            expect(JSONPointer("/aaa")) { instanceLocation }
+            expect("Additional property 'aaa' found but was invalid") { error }
+            assertNull(errors)
+            assertNull(annotation)
+            assertNull(annotations)
+        }
+        with(outputErrors[1]) {
+            assertFalse(valid)
+            expect(JSONPointer("/additionalProperties/maximum")) { keywordLocation }
+            expect(URI("https://example.com/schema#/additionalProperties/maximum")) { absoluteKeywordLocation }
+            expect(JSONPointer("/aaa")) { instanceLocation }
+            expect("Number > maximum 25, was 26") { error }
+            assertNull(errors)
+            assertNull(annotation)
+            assertNull(annotations)
+        }
+    }
+
+    @Test fun `should return detailed output for additional property false`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("properties", JSONObject.build {
+                add("bbb", JSONObject.build {
+                    add("maximum", 30)
+                })
+            })
+            add("additionalProperties", JSONBoolean.FALSE)
+        }
+        val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
+        val schema = schemaDocument.schema
+        val instance = JSONObject.build {
+            add("aaa", 26)
+            add("bbb", 26)
+        }
+        val output = schema.getDetailedOutput(instance)
+        assertFalse(output.valid)
+        expect(JSONPointer("/additionalProperties")) { output.keywordLocation }
+        expect(URI("https://example.com/schema#/additionalProperties")) { output.absoluteKeywordLocation }
+        expect(JSONPointer("/aaa")) { output.instanceLocation }
+        expect("Additional property 'aaa' found but was invalid") { output.error }
+        assertNull(output.errors)
+    }
+
+    @Test fun `should return verbose output for additional property validation`() {
+        val loader = SchemaLoader()
+        val json = JSONObject.build {
+            add("additionalProperties", JSONObject.build {
+                add("maximum", 25)
+            })
+        }
+        val schemaDocument = loader.loadFromJSON(json, URL("https://example.com/schema"))
+        val schema = schemaDocument.schema
+        val instance = JSONObject.build {
+            add("aaa", 24)
+        }
+        assertTrue(schema.validate(instance))
+        with(schema.getVerboseOutput(instance)) {
+            println(this)
+            assertTrue(valid)
+            expect(JSONPointer.root) { keywordLocation }
+            expect(URI("https://example.com/schema#")) { absoluteKeywordLocation }
+            expect(JSONPointer.root) { instanceLocation }
+            assertNull(error)
+            assertNull(errors)
+            assertNull(annotation)
+            with(annotations) {
+                assertNotNull(this)
+                expect(1) { size }
+                with(this[0]) {
+                    assertTrue(valid)
+                    expect(JSONPointer("/additionalProperties")) { keywordLocation }
+                    expect(URI("https://example.com/schema#/additionalProperties")) { absoluteKeywordLocation }
+                    expect(JSONPointer.root) { instanceLocation }
+                    assertNull(error)
+                    assertNull(errors)
+                    assertNull(annotation)
+                    with(annotations) {
+                        assertNotNull(this)
+                        expect(1) { size }
+                        with(this[0]) {
+                            assertTrue(valid)
+                            expect(JSONPointer("/additionalProperties")) { keywordLocation }
+                            expect(URI("https://example.com/schema#/additionalProperties")) { absoluteKeywordLocation }
+                            expect(JSONPointer("/aaa")) { instanceLocation }
+                            assertNull(error)
+                            assertNull(errors)
+//                            expect("additionalProperties") { annotation } // TODO check
+//                            assertNull(annotations) // TODO check
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }

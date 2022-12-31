@@ -44,8 +44,20 @@ abstract class AbstractElement(location: SchemaLocation) : JSONSchema.Element(lo
         parent: JSONSchema.ObjectSchema,
         instance: JSONRef<*>,
         relativeLocation: JSONPointer
-    ): Output {
-        TODO("Not yet implemented")
+    ): Output = if (validate(parent, instance)) {
+        createOutput(
+            valid = true,
+            instance = instance,
+            relativeLocation = relativeLocation,
+            annotation = keyword,
+        )
+    } else {
+        createOutput(
+            valid = false,
+            instance = instance,
+            relativeLocation = relativeLocation,
+            error = getErrorMessage(instance),
+        )
     }
 
 }
